@@ -8,7 +8,7 @@
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-		<link rel="icon" type="image/png" href="https://sugarchain.org/logo.png">
+		<link rel="icon" type="image/png" href="https://cpuchain.org/cpuchain.png">
 		<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
 		
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
@@ -17,6 +17,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/gh/cozmo/jsQR@master/dist/jsQR.js"></script>
+		<script src="https://unpkg.com/js-big-decimal@1.3.1/dist/web/js-big-decimal.min.js"></script>
 		<script src="https://bundle.run/buffer@6.0.3"></script>
 		<script src="https://bundle.run/bitcoinjs-lib@5.1.10"></script>
 		<script src="multilang.js"></script>
@@ -94,16 +95,16 @@
 				word-wrap: break-word;
 			}
 		</style>
-		<title>Wallet</title>
-		<meta name="description" content="Sugarchain Web Wallet">
+		<title>CPUchain Wallet</title>
+		<meta name="description" content="CPUchain Web Wallet">
 	</head>
 	<body>
 		<!-- Navbar -->
 		<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
 			<div class="container">
 				<a href="#" class="navbar-brand">
-					<svg id="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2334.36 2334.36"><defs><style>.cls-1{fill:#fff;}</style></defs><title>sug white</title><path class="cls-1" d="M1049.8,669.06l-545,519.05-.14,2,470.65,32.47,589-603.9Zm566.57-103.61,432,748.49-543.06,672L936.07,1837.25,443.65,1185.86l593.23-565,39.08-3.83,540.27-53Z" transform="translate(-83.54 -82.07)"/><path class="cls-1" d="M1250.72,82.07c644.61,0,1167.18,522.56,1167.18,1167.18S1895.33,2416.43,1250.72,2416.43,83.54,1893.86,83.54,1249.25,606.1,82.07,1250.72,82.07ZM2301.18,1366c64.46-580.16-353.59-1102.72-933.74-1167.18S264.72,552.36,200.26,1132.52,553.85,2235.25,1134,2299.7,2236.72,1946.11,2301.18,1366Z" transform="translate(-83.54 -82.07)"/></svg>
-					<b tkey="wallet-title"></b>
+					<img src="https://cpuchain.org/cpuchain.png" style="height: 30px; margin-right: 5px;">
+					CPUchain Wallet
 				</a>
 				<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
@@ -195,7 +196,7 @@
 									<a class="nav-link tab-link" data-tab-name="wallet-send" data-tab-family="wallet-block" href="#" tkey="send"></a>
 								</li>
 								<li class="nav-item mr-2">
-									<a id="history-link" class="nav-link" target="_blank" href="https://sugar.wtf/#/address/" tkey="history"></a>
+									<a id="history-link" class="nav-link" target="_blank" href="https://explorer.cpuchain.org/#/address/" tkey="history"></a>
 								</li>
 								<li class="nav-item">
 									<a class="nav-link tab-link" data-tab-name="wallet-keys" data-tab-family="wallet-block" href="#" tkey="keys"></a>
@@ -450,7 +451,8 @@
 		<!-- Footer :3 -->
 		<footer class="mb-3">
 			<div class="container text-center">
-				Made with <span class="fa-solid fa-heart text-danger"></span> by <a target="_blank" href="https://github.com/sugarchain-project/web-wallet">Volbil</a>
+				Powered by <a target="_blank" href="https://blockbook.cpuchain.org">Blockbook API</a> |
+				  <a target="_blank" href="https://github.com/cpuchain/cpuchain-wallet">Frontend Source Code</a>
 			</div>
 		</footer>
 
@@ -460,61 +462,42 @@
 			const Buffer = window.buffer.Buffer
 			const bitcoin = window.bitcoinjsLib
 
+			const TX_CHUNK_SIZE = 10
+
 			// Config
 			var stream = undefined
 			var walletTimer = false
 			var walletVersion = '0.5'
 			var networkConfigs = {
-				'SUGAR': {
-					'uri': 'sugarchain:',
-					'title': 'Sugar Wallet',
-					'name': 'Main Network (SUGAR)',
-					// 'api': 'https://api.sugarchain.org',
-					'api': 'https://api.sugar.wtf',
-					'ticker': 'SUGAR',
+				'CPU': {
+					'uri': 'cpuchain:',
+					'title': 'CPUchain Wallet',
+					'name': 'CPUchain',
+					'api': 'https://blockbook.cpuchain.org/api/v2',
+					'ticker': 'CPU',
 					'decimals': 8,
 					'fee': 0.00001,
 					'network': {
-						'messagePrefix': '\x19Sugarchain Signed Message:\n',
+						'messagePrefix': '\x19CPUchain Signed Message:\n',
 						'bip32': {
 							'public': 0x0488b21e,
 							'private': 0x0488ade4
 						},
-						'bech32': 'sugar',
-						'pubKeyHash': 0x3F,
-						'scriptHash': 0x7D,
+						'bech32': 'cpu',
+						'pubKeyHash': 0x1C,
+						'scriptHash': 0x1E,
 						'wif': 0x80
 					}
-				},
-				// 'TUGAR': {
-				// 	'uri': 'sugarchain:',
-				// 	'title': 'Sugar Wallet',
-				// 	'name': 'Test Network (TUGAR)',
-				// 	'api': 'https://api-testnet.sugarchain.org',
-				// 	'ticker': 'TUGAR',
-				// 	'decimals': 8,
-				// 	'fee': 0.00001,
-				// 	'network': {
-				// 		'messagePrefix': '\x19Sugarchain Signed Message:\n',
-				// 		'bip32': {
-				// 			'public': 0x0488b21e,
-				// 			'private': 0x0488ade4
-				// 		},
-				// 		'bech32': 'tugar',
-				// 		'pubKeyHash': 0x42,
-				// 		'scriptHash': 0x80,
-				// 		'wif': 0xEF
-				// 	}
-				// }
+				}
 			}
 
 			// Explorer links
 			var blockExplorer = {
 				'address': function(address) {
-					return 'https://sugar.wtf/#/address/' + address + '/' + getConfig()['ticker']
+					return 'https://explorer.cpuchain.org/#/address/' + address
 				},
 				'tx': function(tx) {
-					return 'https://sugar.wtf/#/transaction/' + tx + '/' + getConfig()['ticker']
+					return 'https://explorer.cpuchain.org/#/tx/' + tx
 				}
 			}
 
@@ -523,6 +506,7 @@
 				'keys': undefined,
 				'address': undefined,
 				'rfee': getConfig()['fee'],
+				utxos: [],
 				'tx': {
 					'amount': 0,
 					'outputs': [],
@@ -539,8 +523,17 @@
 					this.keys = {}
 					this.address = ''
 					this.balance = 0
+					this.utxos = []
 					this.resetTx()
 				}
+			}
+
+			function sleep(ms = 0) {
+				return new Promise((resolve) => setTimeout(resolve, ms))
+			}
+
+			function chunk(arr = [], size = 0) {
+				return [...Array(Math.ceil(arr.length / size))].map((v, i) => arr.slice(size * i, size + size * i))
 			}
 
 			// Messages
@@ -682,7 +675,7 @@
 			function getAddressType() {
 				var type = readCookie('type')
 				if (type == null || !['bech32', 'segwit', 'legacy'].includes(type)) {
-					setCookie('type', 'bech32', 60)
+					setCookie('type', 'legacy', 60)
 					type = readCookie('type')
 				}
 
@@ -708,16 +701,10 @@
 			}
 
 			// Switch wallet backend
+			// skip /info check for convenience
 			function switchBackend(url) {
-				Promise.resolve($.ajax({
-					'url': url + '/info',
-				})).then(function(data) {
-					setCookie('backend', url, 60)
-					showMessage(messages.settings.backendSwitched(url))
-				}).catch(function() {
-					showMessage(messages.settings.backendNotWorking(url))
-					$('#wallet-backend input').val(getBackend())
-				})
+				setCookie('backend', url, 60)
+				showMessage(messages.settings.backendSwitched(url))
 			}
 
 			// Set cookie
@@ -822,59 +809,108 @@
 			}
 
 			// Broadcast tx
-			function transactionBroadcast(rawtx) {
-				return Promise.resolve($.ajax({
-					'method': 'POST',
-					'url': getBackend() + '/broadcast',
-					'data': {
-						'raw': rawtx
-					}
-				}))
+			async function transactionBroadcast(rawtx) {
+				const resp = await fetch(`${getBackend()}/sendtx/`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: rawtx
+				})
+				
+				const data = await resp.json()
+
+				if (data.error) {
+					throw new Error(JSON.stringify(data.error))
+				}
+
+				return data.result
 			}
 
 			// Estimate fee
-			function estimateFee() {
-				return Promise.resolve($.ajax({
-					'url': getBackend() + '/fee',
-				})).then(function(data) {
-					return data
-				})
-			}
+			async function estimateFee() {
+				try {
+					const resp = await fetch(`${getBackend()}/estimatefee/10`, {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					})
+					
+					const data = await resp.json()
 
-			// Get address balance
-			function addressBalance(address) {
-				return Promise.resolve($.ajax({
-					'url': getBackend() + '/balance/' + address,
-				})).then(function(data) {
-					return data
-				})
+					if (data.error) {
+						throw new Error(JSON.stringify(data.error))
+					}
+
+					const parsedFee = Number(data.result)
+
+					if (parsedFee < getConfig()['fee']) {
+						return getConfig()['fee']
+					}
+
+					return parsedFee
+				} catch {
+					return getConfig()['fee']
+				}
 			}
 
 			// Get address UTXO
-			function getUnspent(address, amount) {
-				return Promise.resolve($.ajax({
-					'url': getBackend() + '/unspent/' + address + '?amount=' + amount,
-				})).then(function(data) {
-					return data
+			// This only returns an array of txid and unspent values
+			async function getUnspent(address) {
+				const resp = await fetch(`${getBackend()}/utxo/${address}`, {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				})
+
+				const data = await resp.json()
+
+				// Return UTXOs in ascending order as we want to spend the oldest coins first
+				return data.sort((a, b) => {
+					if (a.height === b.height) {
+						return a.vout - b.vout
+					}
+					return a.height - b.height
 				})
 			}
 
-			// Get transaction info
-			function transactionInfo(hash) {
-				return Promise.resolve($.ajax({
-					'url': getBackend() + '/transaction/' + hash,
-				})).then(function(data) {
-					return data
-				})
+			// Get transactions to build a psbt
+			// Since non-segwit addresses would need to input the whole tx object we ask the api full info
+			// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts#L36
+			async function getTransactions(txs = []) {
+				const results = []
+
+				for (const chunks of chunk(txs, TX_CHUNK_SIZE)) {
+					const chunkResults = await Promise.all(txs.map(async (tx, index) => {
+						await sleep(index * 20)
+
+						const resp = await fetch(`${getBackend()}/tx/${tx}`, {
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json'
+							}
+						})
+
+						return resp.json()
+					}))
+
+					results.push(...chunkResults)
+				}
+
+				return results
 			}
 
 			// Convert satoshis to readable amount
 			function amountFormat(amount, invert = false) {
 				var decimals = getConfig()['decimals']
 				if (!invert) {
-					return parseFloat((amount / Math.pow(10, decimals)).toFixed(decimals))
+					return Number(bigDecimal.divide(amount, 10 ** decimals, decimals))
 				} else {
-					return parseInt(amount * Math.pow(10, decimals))
+					// Fixes 0.00013 * 1000 => 0.12999999999999998
+					// return Math.floor(amount * 10 ** decimals)
+					return Math.floor(Number(bigDecimal.multiply(amount, 10 ** decimals)))
 				}
 			}
 
@@ -894,23 +930,32 @@
 
 			/* Wallet functions */
 
-			// Check wallet balance
-			function walletBalance() {
-				var balance = '0.00'
+			// Refresh UTXO list and wallet balance
+			async function walletBalance() {
+				if (!globalData.address) {
+					return
+				}
+
 				$('.wallet-balance .amount').text('')
 				$('.wallet-balance .ticker').text(getText('loading'))
 
-				addressBalance(globalData.address).then(function(data) {
-					if (data['error'] == undefined) {
-						globalData.balance = data.result.balance
-						balance = amountFormat(globalData.balance)
-					} else {
-						showMessage(messages.errors['balance-load-failed'])
-					}
+				try {
+					const utxos = await getUnspent(globalData.address)
+					const utxoBalance = utxos.reduce((acc, curr) => {
+						acc += Number(curr.value)
+						return acc
+					}, 0)
 
-					$('.wallet-balance .amount').text(balance)
+					globalData.balance = utxoBalance
+					globalData.utxos = utxos
+					$('.wallet-balance .amount').text(amountFormat(utxoBalance))
 					$('.wallet-balance .ticker').text(getConfig()['ticker'])
-				})
+				} catch (err) {
+					console.log(err)
+					showMessage(messages.errors['balance-load-failed'])
+					$('.wallet-balance .amount').text('0.00')
+					$('.wallet-balance .ticker').text(getConfig()['ticker'])
+				}
 			}
 
 			// Set title
@@ -973,7 +1018,7 @@
 
 				$.each($('#send-outputs .send-outputs-item'), function(key, item) {
 					var address = $('[name="send-address"]', item).val().trim()
-					var value = $('[name="send-ammount"]', item).val() * 1
+					var value = $('[name="send-ammount"]', item).val()
 					globalData.tx.outputs.push({
 						'address': address,
 						'amount': amountFormat(value, true)
@@ -981,7 +1026,7 @@
 				})
 
 				globalData.tx.amount = amountFormat(amount, true)
-				globalData.tx.fee = amountFormat(($('#send-fee').val() != '') ? $('#send-fee').val() : globalData.rfee, true)
+				globalData.tx.fee = amountFormat($('#send-fee').val() || globalData.rfee, true)
 			}
 
 			function stopStream() {
@@ -1058,119 +1103,126 @@
 				startStream()
 			}
 
-			function sendTransaction() {
-				var network = getConfig()['network']
-				var keys = globalData.keys
+			async function sendTransaction() {
+				try {
+					const network = getConfig()['network']
+					const keys = globalData.keys
+					// vout
+					const outputs = globalData.tx.outputs
+					// sum of vout + fees
+					const amount = globalData.tx.amount
+					const address = globalData.address
+					
+					const minFee = globalData.tx.fee
+					
+					const txb = new bitcoin.TransactionBuilder(network)
+					txb.setVersion(2)
+					
+					$('#send-cancel').addClass('disabled')
+					$('#send-confirm').addClass('disabled')
+					$('#confirm-screen').addClass('d-none')
+					$('#status-screen').removeClass('d-none')
+					$('#send-title').text(messages.title['processing'])
+					$('#status-screen .extra-info').empty()
+					$('#status-screen span').html(messages.tx['generating'])
 
-				var decimals = getConfig()['decimals']
-				var outputs = globalData.tx.outputs
-				var amount = globalData.tx.amount
-				var address = globalData.address
+					outputs.forEach(({address, amount}) => {
+						txb.addOutput(address, amount)
+					})
+					
+					let selectedAmounts = 0
+					const selectedUtxos = [...globalData.utxos].filter(tx => {
+						if (selectedAmounts > amount) {
+							return false
+						}
+						
+						selectedAmounts += Number(tx.value)
+						return true
+					})
 
-				var hashType = bitcoin.Transaction.SIGHASH_ALL
-				var scripts = []
+					console.log(`Selected amounts: ${amountFormat(selectedAmounts)} ${selectedUtxos.length} inputs`)
+					console.log('Selected UTXOs', selectedUtxos)
+					
+					// Maybe either our API is behind blocks or user spending tx too quickly
+					// This doesn't occur often
+					if (selectedAmounts < amount) {
+						console.log(`Transaction canceled due to insufficient UTXO amount, wants ${amount} selected ${selectedAmounts}`)
+						showMessage(messages.error['not-enough-funds'])
+						return
+					}
+					
+					// Credit change amount to wallet if they are more than dust
+					const change = selectedAmounts - amount
+					if (change > minFee) {
+						txb.addOutput(address, change)
+					}
 
-				var txb = new bitcoin.TransactionBuilder(network)
-				txb.setVersion(2)
-
-				$('#send-cancel').addClass('disabled')
-				$('#send-confirm').addClass('disabled')
-				$('#confirm-screen').addClass('d-none')
-				$('#status-screen').removeClass('d-none')
-				$('#send-title').text(messages.title['processing'])
-				$('#status-screen .extra-info').empty()
-				$('#status-screen span').html(messages.tx['generating'])
-
-				for (var i = 0, size = outputs.length; i < size; i++) {
-					txb.addOutput(outputs[i].address, outputs[i].amount)
-				}
-
-				$('#status-screen span').html(messages.tx['loading-utxo'])
-				getUnspent(address, amount).then(function(data) {
-					var value = 0
-					for (var i = 0, size = data.result.length; i < size; i++) {
-						var txid = data.result[i].txid
-						var index = data.result[i].index
-						value += data.result[i].value
-
-						var script = Buffer.from(data.result[i].script, 'hex')
-						var type = getScriptType(script)
-
-						if (type == 'bech32') {
-							var p2wpkh = getP2WPKHScript(keys.publicKey)
+					$('#status-screen span').html(messages.tx['loading-utxo'])
+					
+					const txs = await getTransactions([...new Set(selectedUtxos.map(t => t.txid))])
+					
+					// Add inputs and sign them
+					const scripts = selectedUtxos.map(({ txid, vout: index, value }) => {
+						const tx = txs.find(t => t.txid === txid)
+						const vout = tx.vout.find(v => v.n === index)
+						value = Number(value)
+						
+						const script = Buffer.from(vout.hex, 'hex')
+						const type = getScriptType(script)
+						
+						if (type === 'bech32') {
+							const p2wpkh = getP2WPKHScript(keys.publicKey)
 							txb.addInput(txid, index, null, p2wpkh.output)
 						} else {
 							txb.addInput(txid, index)
 						}
 
-						scripts.push({
-							'script': script,
-							'type': type,
-							'value': data.result[i].value
-						})
-					}
-
-					if (value >= amount) {
-						var change = value - amount
-						if (change > 0) {
-							txb.addOutput(address, change)
+						return {
+							type,
+							value
 						}
+					})
 
-						for (var i = 0, size = scripts.length; i < size; i++) {
-							switch (scripts[i].type) {
-								case 'bech32':
-									var value = scripts[i].value
-									txb.sign(i, keys, null, null, value, null)
-									break
-
-								case 'segwit':
-									var value = scripts[i].value
-									var redeem = getP2WPKHScript(keys.publicKey)
-									var p2sh = getP2SHScript(redeem)
-
-									txb.sign(i, keys, p2sh.redeem.output, null, value, null)
-									break
-
-								case 'legacy':
-									txb.sign(i, keys)
-									break
-
-								default:
-									showMessage(messages.error['bad-utxo'])
-									break
-							}
+					scripts.forEach(({ type, value }, index) => {
+						if (type === 'bech32') {
+							txb.sign(index, keys, null, null, value, null)
+						} else if (type === 'segwit') {
+							const redeem = getP2WPKHScript(keys.publicKey)
+							const p2sh = getP2SHScript(redeem)
+							txb.sign(index, keys, p2sh.redeem.output, null, value, null)
+						} else if (type === 'legacy') {
+							txb.sign(index, keys)
+						} else {
+							showMessage(messages.error['bad-utxo'])
+							throw new Error(messages.error['bad-utxo'])
 						}
+					})
 
-						var tx = txb.build()
-						transactionBroadcast(tx.toHex()).then(function(data) {
-							if (data.error == undefined) {
-								$('#status-screen span').html(`
-									<a href="${blockExplorer.tx(data.result)}" target="_blank">
-										${data.result}
-									</a> 
-								`)
-								$('#send-title').text(messages.title['success'])
-							} else {
-								$('#status-screen span').html(messages.error['broadcast-failed'])
-								$('#send-title').text(messages.title['failed'])
-								$('#status-screen .extra-info').html(`
-									<div class="mt-3">
-										<textarea class="form-control" readonly cols="30" rows="10">${data.error.message}</textarea>
-									</div>
-								`)
-							}
-							resetTxForm()
-						})
+					const tx = txb.build()
+					const txid = await transactionBroadcast(tx.toHex())
 
-						$('#send-cancel').addClass('d-none')
-						$('#send-confirm').addClass('d-none')
-						$('#send-close-footer').removeClass('d-none')
-						$('#send-close-footer').removeClass('disabled')
+					$('#status-screen span').html(`
+						<a href="${blockExplorer.tx(txid)}" target="_blank">
+							${txid}
+						</a> 
+					`)
+					$('#send-title').text(messages.title['success'])
+				} catch (err) {
+					console.log(err)
+					$('#status-screen span').html(messages.error['broadcast-failed'])
+					$('#send-title').text(messages.title['failed'])
+					$('#status-screen .extra-info').html(`
+						<div class="mt-3">
+							<textarea class="form-control" readonly cols="30" rows="10">${err.message}</textarea>
+						</div>
+					`)
+				}
+				resetTxForm()
 
-					} else {
-						showMessage(messages.error['not-enough-funds'])
-					}
-				})
+				$('#send-cancel').addClass('d-none')
+				$('#send-confirm').addClass('d-none')
+				$('#send-close-footer').removeClass('d-none')
+				$('#send-close-footer').removeClass('disabled')
 			}
 
 			// Close wallet
@@ -1270,17 +1322,18 @@
 			})
 
 			// Broadcast raw transaction
-			$('#footer-broadcast').click(function(){
-				var rawtx = $('#transaction-broadcast-raw')
-				transactionBroadcast(rawtx.val()).then(function(data) {
-					if (data.error == undefined) {
-						showMessage(`
-							${messages.tx['success']}<a href="` + blockExplorer.tx(data.result) + `" target="_blank">` + data.result + `</a>
-						`)
-					} else {
-						showMessage(messages.error['broadcast-failed'])
-					}
-				})
+			$('#footer-broadcast').click(async function(){
+				const rawtx = $('#transaction-broadcast-raw')
+				try {
+					const txid = await transactionBroadcast(rawtx.val())
+
+					showMessage(`
+						${messages.tx['success']}<a href="` + blockExplorer.tx(txid) + `" target="_blank">` + txid + `</a>
+					`)
+				} catch (err) {
+					console.log(err)
+					showMessage(messages.error['broadcast-failed'])
+				}
 				rawtx.val('')
 			})
 
@@ -1516,14 +1569,7 @@
 					initWallet()
 				})
 
-				// Set wallet recomended fee
-				estimateFee().then(function(data) {
-					if (data.error == undefined) {
-						globalData.rfee = amountFormat(data.result.feerate)
-					} else {
-						globalData.rfee = getConfig()['fee']
-					}
-				})
+				estimateFee().then(d => globalData.rfee = d)
 
 				$('#scan-modal').on('hide.bs.modal', function (e) {
 					stopStream()
