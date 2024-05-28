@@ -77,6 +77,9 @@
 			.wallet-balance .text-monospace {
 				font-size: 20px;
 			}
+			.coinbase-balance {
+				font-size: 18px;
+			}
 			@media (max-width: 991.98px) {
 				.navbar-expand-lg>.container, .navbar-expand-lg>.container-fluid {
 					padding-right: 15px;
@@ -211,6 +214,12 @@
 										<span class="text-monospace amount"></span>
 										<span class="ticker" tkey="loading"></span>
 									</div>
+									<div class="coinbase-balance mb-0 pb-0 c-pointer">
+										<span> ( Coinbase: </span>
+										<span class="amount"></span>
+										<span class="ticker" tkey="loading"></span>
+										<span> )</span>
+									</div>
 								</div>
 							</div>
 
@@ -221,6 +230,12 @@
 										<b class="wallet-balance balance-small c-pointer">
 											<span class="amount"></span>
 											<span class="ticker" tkey="loading"></span>
+										</b>
+										<b class="coinbase-balance balance-small c-pointer">
+											<span> ( Coinbase: </span>
+											<span class="amount"></span>
+											<span class="ticker" tkey="loading"></span>
+											<span> )</span>
 										</b>
 									</span>
 
@@ -498,6 +513,7 @@
 
 			var globalData = {
 				'balance': 0,
+				'coinbase': 0,
 				'keys': undefined,
 				'address': undefined,
 				'rfee': getConfig()['fee'],
@@ -518,6 +534,7 @@
 					this.keys = undefined
 					this.address = undefined
 					this.balance = 0
+					this.coinbase = 0
 					this.utxos = []
 					this.resetTx()
 				}
@@ -933,23 +950,37 @@
 
 				$('.wallet-balance .amount').text('')
 				$('.wallet-balance .ticker').text(getText('loading'))
+				$('.coinbase-balance').hide()
 
 				try {
+					let coinbase = 0
 					const utxos = await getUnspent(globalData.address)
 					const utxoBalance = utxos.reduce((acc, curr) => {
-						acc += Number(curr.value)
+						if (curr.coinbase && curr.confirmations < 100) {
+							coinbase += Number(curr.value)
+						} else {
+							acc += Number(curr.value)
+						}
 						return acc
 					}, 0)
 
 					globalData.balance = utxoBalance
+					globalData.coinbase = coinbase
 					globalData.utxos = utxos
 					$('.wallet-balance .amount').text(amountFormat(utxoBalance))
 					$('.wallet-balance .ticker').text(getConfig()['ticker'])
+
+					if (coinbase) {
+						$('.coinbase-balance .amount').text(amountFormat(coinbase))
+						$('.coinbase-balance .ticker').text(getConfig()['ticker'])
+						$('.coinbase-balance').show()
+					}
 				} catch (err) {
 					console.log(err)
 					showMessage(messages.errors['balance-load-failed'])
 					$('.wallet-balance .amount').text('0.00')
 					$('.wallet-balance .ticker').text(getConfig()['ticker'])
+					$('.coinbase-balance').hide()
 				}
 			}
 
