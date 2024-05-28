@@ -18,8 +18,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/gh/cozmo/jsQR@master/dist/jsQR.js"></script>
 		<script src="https://unpkg.com/js-big-decimal@1.3.1/dist/web/js-big-decimal.min.js"></script>
-		<script src="https://bundle.run/buffer@6.0.3"></script>
-		<script src="https://bundle.run/bitcoinjs-lib@5.1.10"></script>
+		<script src="./bitcoinjs.min.js"></script>
 		<script src="multilang.js"></script>
 
 		<style>
@@ -458,10 +457,6 @@
 
 		<!-- All magic is here :D -->
 		<script>
-			// Legacy bitcoinjs-lib still requires Buffer object rather than Uint8Array
-			const Buffer = window.buffer.Buffer
-			const bitcoin = window.bitcoinjsLib
-
 			const TX_CHUNK_SIZE = 10
 
 			// Config
@@ -520,8 +515,8 @@
 					}
 				},
 				'clear': function() {
-					this.keys = {}
-					this.address = ''
+					this.keys = undefined
+					this.address = undefined
 					this.balance = 0
 					this.utxos = []
 					this.resetTx()
@@ -546,7 +541,7 @@
 							return getText('address-type-changed') + ' <b>' + type + '</b>'
 						},
 						'backendSwitched': function (url) {
-							returngetText('backend-switched') +  ' <b>' + url + '</b>'
+							return getText('backend-switched') +  ' <b>' + url + '</b>'
 						},
 						'backendNotWorking': function (url) {
 							return '<b>' + url + '</b> ' + getText('backend-down')
@@ -1020,8 +1015,8 @@
 					var address = $('[name="send-address"]', item).val().trim()
 					var value = $('[name="send-ammount"]', item).val()
 					globalData.tx.outputs.push({
-						'address': address,
-						'amount': amountFormat(value, true)
+						address,
+						value: amountFormat(value, true)
 					})
 				})
 
@@ -1114,9 +1109,8 @@
 					const address = globalData.address
 					
 					const minFee = globalData.tx.fee
-					
-					const txb = new bitcoin.TransactionBuilder(network)
-					txb.setVersion(2)
+
+					const psbt = new bitcoin.Psbt({ network })
 					
 					$('#send-cancel').addClass('disabled')
 					$('#send-confirm').addClass('disabled')
@@ -1126,8 +1120,8 @@
 					$('#status-screen .extra-info').empty()
 					$('#status-screen span').html(messages.tx['generating'])
 
-					outputs.forEach(({address, amount}) => {
-						txb.addOutput(address, amount)
+					outputs.forEach((output) => {
+						psbt.addOutput(output)
 					})
 					
 					let selectedAmounts = 0
@@ -1154,8 +1148,14 @@
 					// Credit change amount to wallet if they are more than dust
 					const change = selectedAmounts - amount
 					if (change > minFee) {
-						txb.addOutput(address, change)
+						psbt.addOutput({ address, value: change })
 					}
+
+					console.log({
+						selectedAmounts,
+						amount,
+						change
+					})
 
 					$('#status-screen span').html(messages.tx['loading-utxo'])
 					
@@ -1167,14 +1167,40 @@
 						const vout = tx.vout.find(v => v.n === index)
 						value = Number(value)
 						
-						const script = Buffer.from(vout.hex, 'hex')
+						const script = bitcoin.Buffer.from(vout.hex, 'hex')
 						const type = getScriptType(script)
 						
 						if (type === 'bech32') {
 							const p2wpkh = getP2WPKHScript(keys.publicKey)
-							txb.addInput(txid, index, null, p2wpkh.output)
+							psbt.addInput({
+								hash: txid,
+								index,
+								witnessUtxo: {
+									script: p2wpkh.output,
+									value
+								}
+							})
+						} else if (type === 'segwit') {
+							const p2pkh = getP2WPKHScript(keys.publicKey)
+							const p2sh_p2wpkh = bitcoin.payments.p2sh({
+								'redeem': p2pkh,
+								network
+							})
+							psbt.addInput({
+								hash: txid,
+								index,
+								witnessUtxo: {
+									script: p2sh_p2wpkh.output,
+									value
+								},
+								redeemScript: p2pkh.output
+							})
 						} else {
-							txb.addInput(txid, index)
+							psbt.addInput({
+								hash: txid,
+								index,
+								nonWitnessUtxo: bitcoin.Buffer.from(tx.hex, 'hex')
+							})
 						}
 
 						return {
@@ -1184,22 +1210,11 @@
 					})
 
 					scripts.forEach(({ type, value }, index) => {
-						if (type === 'bech32') {
-							txb.sign(index, keys, null, null, value, null)
-						} else if (type === 'segwit') {
-							const redeem = getP2WPKHScript(keys.publicKey)
-							const p2sh = getP2SHScript(redeem)
-							txb.sign(index, keys, p2sh.redeem.output, null, value, null)
-						} else if (type === 'legacy') {
-							txb.sign(index, keys)
-						} else {
-							showMessage(messages.error['bad-utxo'])
-							throw new Error(messages.error['bad-utxo'])
-						}
+						psbt.signInput(index, keys)
 					})
 
-					const tx = txb.build()
-					const txid = await transactionBroadcast(tx.toHex())
+					psbt.finalizeAllInputs()
+					const txid = await transactionBroadcast(psbt.extractTransaction().toHex())
 
 					$('#status-screen span').html(`
 						<a href="${blockExplorer.tx(txid)}" target="_blank">
@@ -1346,7 +1361,7 @@
 
 			function initWallet() {
 				// Open only if key is valid
-				if (globalData.keys != undefined) {
+				if (globalData.keys) {
 					openWallet(globalData.keys)
 				}
 			}
@@ -1472,7 +1487,7 @@
 								$('#open-password-confirm').val('')
 
 								globalData.keys = bitcoin.ECPair.fromPrivateKey(
-									Buffer.from(s, 'hex'),
+									bitcoin.Buffer.from(s, 'hex'),
 									{'network': getConfig()['network']}
 								)
 								openWallet(globalData.keys)
