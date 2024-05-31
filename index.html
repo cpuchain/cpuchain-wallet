@@ -293,7 +293,7 @@
 									</div>
 
 									<div id="wallet-keys-script">
-										<label>Redeem Script <i>(SegWit)</i></label>
+										<label>Redeem Script</label>
 										<div class="input-group pb-2">
 											<input class="form-control" readonly type="text">
 										</div>
@@ -381,6 +381,7 @@
 							<label tkey="address-type"></label>
 							<div class="input-group pb-2">
 								<select class="custom-select">
+									<option>taproot</option>
 									<option>bech32</option>
 									<option>segwit</option>
 									<option>legacy</option>
@@ -686,7 +687,7 @@
 			// Get current address type
 			function getAddressType() {
 				var type = readCookie('type')
-				if (type == null || !['bech32', 'segwit', 'legacy'].includes(type)) {
+				if (type == null || !['taproot', 'bech32', 'segwit', 'legacy'].includes(type)) {
 					setCookie('type', 'legacy', 60)
 					type = readCookie('type')
 				}
@@ -696,7 +697,7 @@
 
 			// Switch address type
 			function switchAddressType(type) {
-				if (['bech32', 'segwit', 'legacy'].includes(type)) {
+				if (['taproot', 'bech32', 'segwit', 'legacy'].includes(type)) {
 					setCookie('type', type, 60)
 				}
 			}
@@ -1006,21 +1007,21 @@
 
 			// Open wallet by key
 			function openWallet(keys) {
-				globalData.address = getAddress(keys)
-				var pubkey = keys.publicKey.toString('hex')
-				var wif = keys.toWIF()
-				var redeem = '0014' + getP2WPKHScript(keys.publicKey).hash.toString('hex')
+				const address = getAddress(keys)
+				const redeem = getAddressScript(address).toString('hex')
 
-				$('#wallet-keys-pubkey input').val(pubkey)
-				$('#wallet-keys-privkey input').val(wif)
+				globalData.address = address
+
+				$('#wallet-keys-pubkey input').val(keys.publicKey.toString('hex'))
+				$('#wallet-keys-privkey input').val(keys.toWIF())
 				$('#wallet-keys-script input').val(redeem)
 				
-				$('#wallet-address').html(globalData.address)
+				$('#wallet-address').html(address)
 				$('#open-block').addClass('d-none')
 				$('#wallet-block').removeClass('d-none')
-				$('#history-link').attr('href', blockExplorer.address(globalData.address))
+				$('#history-link').attr('href', blockExplorer.address(address))
 				$('#send-fee').attr('placeholder', getText('fee') + ' (' + getText('recommended') + ' ' + globalData.rfee + ' ' + getConfig()['ticker'] + ')')
-				showQrAddress(getConfig()['uri'] + globalData.address)
+				showQrAddress(getConfig()['uri'] + address)
 
 				// Init wallet stuffs
 				walletBalance()
@@ -1201,20 +1202,30 @@
 						const script = bitcoin.Buffer.from(vout.hex, 'hex')
 						const type = getScriptType(script)
 						
-						if (type === 'bech32') {
-							const p2wpkh = getP2WPKHScript(keys.publicKey)
+						// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
+						if (type === 'taproot') {
+							const tapInternalKey = keys.publicKey.slice(1, 33)
 							psbt.addInput({
 								hash: txid,
 								index,
 								witnessUtxo: {
-									script: p2wpkh.output,
+									script,
+									value
+								},
+								tapInternalKey
+							})
+						}	else if (type === 'bech32') {
+							psbt.addInput({
+								hash: txid,
+								index,
+								witnessUtxo: {
+									script,
 									value
 								}
 							})
 						} else if (type === 'segwit') {
-							const p2pkh = getP2WPKHScript(keys.publicKey)
 							const p2sh_p2wpkh = bitcoin.payments.p2sh({
-								'redeem': p2pkh,
+								redeem: script,
 								network
 							})
 							psbt.addInput({
@@ -1224,7 +1235,7 @@
 									script: p2sh_p2wpkh.output,
 									value
 								},
-								redeemScript: p2pkh.output
+								redeemScript: script
 							})
 						} else {
 							psbt.addInput({
@@ -1241,6 +1252,13 @@
 					})
 
 					scripts.forEach(({ type, value }, index) => {
+						// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
+						if (type === 'taproot') {
+							const tapKey = keys.publicKey.slice(1, 33)
+							const tweakedKey = keys.tweak(bitcoin.crypto.taggedHash('TapTweak', tapKey))
+							psbt.signInput(index, tweakedKey)
+							return
+						}
 						psbt.signInput(index, keys)
 					})
 
@@ -1280,78 +1298,70 @@
 			}
 
 			function getScriptType(script) {
-				var type = undefined
-
-				if (script[0] == bitcoin.opcodes.OP_0 &&
-					script[1] == 20) {
-					type = 'bech32'
+				if (script[0] === bitcoin.opcodes.OP_1 && script[1] === 32) {
+					return 'taproot'
 				}
 
-				if (script[0] == bitcoin.opcodes.OP_HASH160 &&
-					script[1] == 20) {
-					type = 'segwit'
+				if (script[0] == bitcoin.opcodes.OP_0 && script[1] == 20) {
+					return 'bech32'
 				}
 
-				if (script[0] == bitcoin.opcodes.OP_DUP &&
+				if (script[0] == bitcoin.opcodes.OP_HASH160 && script[1] == 20) {
+					return 'segwit'
+				}
+
+				if (
+					script[0] == bitcoin.opcodes.OP_DUP &&
 					script[1] == bitcoin.opcodes.OP_HASH160 &&
-					script[2] == 20) {
-					type = 'legacy'
+					script[2] == 20
+				) {
+					return 'legacy'
 				}
-
-				return type
 			}
 
-			function getP2SHScript(redeem) {
-				return bitcoin.payments.p2sh({
-					'redeem': redeem,
-					'network': getConfig()['network']
-				})
-			}
-
-			function getP2WPKHScript(pubkey) {
-				return bitcoin.payments.p2wpkh({
-					'pubkey': pubkey,
-					'network': getConfig()['network']
-				})
+			function getAddressScript(address) {
+				return bitcoin.address.toOutputScript(address, getConfig()['network'])
 			}
 
 			function getAddress(keys) {
-				var network = getConfig()['network']
-				var address = undefined
+				const network = getConfig()['network']
+				const addrType = getAddressType()
 
-				if (getAddressType() == 'bech32') {
-					address = bitcoin.payments.p2wpkh({
-						'pubkey': keys.publicKey,
-						'network': network
+				if (addrType === 'taproot') {
+					const internalPubkey = keys.publicKey.slice(1, 33)
+					return bitcoin.payments.p2tr({
+						internalPubkey,
+						network
 					}).address
-				} else if (getAddressType() == 'segwit') {
-					address = bitcoin.payments.p2sh({
-						'redeem': getP2WPKHScript(keys.publicKey),
-						'network': network
+				} else if (addrType === 'bech32') {
+					return bitcoin.payments.p2wpkh({
+						pubkey: keys.publicKey,
+						network
 					}).address
-				} else if (getAddressType() == 'legacy') {
-					address = bitcoin.payments.p2pkh({
-						'pubkey': keys.publicKey,
-						'network': getConfig()['network']
+				} else if (addrType === 'segwit') {
+					const redeem = bitcoin.payments.p2wpkh({
+						pubkey: keys.publicKey,
+						network
+					})
+					return bitcoin.payments.p2sh({
+						redeem,
+						network
+					}).address
+				} else if (addrType === 'legacy') {
+					return bitcoin.payments.p2pkh({
+						pubkey: keys.publicKey,
+						network
 					}).address
 				}
-
-				return address
 			}
 
 			function validateAddress(address) {
-				var network = getConfig()['network']
-
 				try {
-					bitcoin.address.fromBase58Check(address, network)
+					getAddressScript(address)
 					return true
 				} catch (e) {
-					try {
-						bitcoin.address.fromBech32(address, network)
-						return true
-					} catch (e) {
-						return false
-					}
+					console.log(e)
+					return false
 				}
 			}
 
