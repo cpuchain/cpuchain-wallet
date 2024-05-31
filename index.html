@@ -895,7 +895,7 @@
 				const results = []
 
 				for (const chunks of chunk(txs, TX_CHUNK_SIZE)) {
-					const chunkResults = await Promise.all(txs.map(async (tx, index) => {
+					const chunkResults = await Promise.all(chunks.map(async (tx, index) => {
 						await sleep(index * 20)
 
 						const resp = await fetch(`${getBackend()}/tx/${tx}`, {
