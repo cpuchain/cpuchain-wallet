@@ -476,64 +476,76 @@
 			const TX_CHUNK_SIZE = 10
 
 			// Config
-			var stream = undefined
-			var walletTimer = false
-			var walletVersion = '0.5'
-			var networkConfigs = {
-				'CPU': {
-					'uri': 'cpuchain:',
-					'title': 'CPUchain Wallet',
-					'name': 'CPUchain',
-					'api': 'https://blockbook.cpuchain.org/api/v2',
-					'ticker': 'CPU',
-					'decimals': 8,
-					'fee': 0.00001,
-					'network': {
-						'messagePrefix': '\x19CPUchain Signed Message:\n',
-						'bip32': {
-							'public': 0x0488b21e,
-							'private': 0x0488ade4
+			let stream = undefined
+			let walletTimer = false
+			const walletVersion = '0.5'
+			const networkConfigs = {
+				CPU: {
+					uri: 'cpuchain:',
+					title: 'CPUchain Wallet',
+					name: 'CPUchain',
+					api: 'https://blockbook.cpuchain.org/api/v2',
+					ticker: 'CPU',
+					decimals: 8,
+					fee: 0.00001,
+					explorer: 'https://explorer.cpuchain.org/#',
+					network: {
+						messagePrefix: '\x19CPUchain Signed Message:\n',
+						bip32: {
+							public: 0x0488b21e,
+							private: 0x0488ade4
 						},
-						'bech32': 'cpu',
-						'pubKeyHash': 0x1C,
-						'scriptHash': 0x1E,
-						'wif': 0x80
+						bech32: 'cpu',
+						pubKeyHash: 0x1C,
+						scriptHash: 0x1E,
+						wif: 0x80
+					}
+				},
+				TCPU: {
+					uri: 'cpuchain:',
+					title: 'CPUchain Testnet Wallet',
+					name: 'CPUchain Testnet',
+					api: 'https://testnet-blockbook.cpuchain.org/api/v2',
+					ticker: 'CPU',
+					decimals: 8,
+					fee: 0.00001,
+					explorer: 'https://explorer.cpuchain.org/#',
+					network: {
+						messagePrefix: '\x19CPUchain Signed Message:\n',
+						bip32: {
+							public: 0x043587CF,
+							private: 0x04358394
+						},
+						bech32: 'tcpu',
+						pubKeyHash: 0x6F,
+						scriptHash: 0xC4,
+						wif: 0xEF
 					}
 				}
 			}
 
-			// Explorer links
-			var blockExplorer = {
-				'address': function(address) {
-					return 'https://explorer.cpuchain.org/#/address/' + address
-				},
-				'tx': function(tx) {
-					return 'https://explorer.cpuchain.org/#/tx/' + tx
-				}
-			}
-
-			var globalData = {
-				'balance': 0,
-				'coinbase': 0,
-				'keys': undefined,
-				'address': undefined,
-				'rfee': getConfig()['fee'],
+			let globalData = {
+				balance: 0,
+				coinbase: 0,
+				keys: null,
+				address: null,
+				rfee: getConfig()['fee'],
 				utxos: [],
-				'tx': {
-					'amount': 0,
-					'outputs': [],
-					'fee': 0
+				tx: {
+					amount: 0,
+					outputs: [],
+					fee: 0
 				},
-				'resetTx': function() {
+				resetTx: function() {
 					this.tx = {
-						'amount': 0,
-						'outputs': [],
-						'fee': 0
+						amount: 0,
+						outputs: [],
+						fee: 0
 					}
 				},
-				'clear': function() {
-					this.keys = undefined
-					this.address = undefined
+				clear: function() {
+					this.keys = null
+					this.address = null
 					this.balance = 0
 					this.coinbase = 0
 					this.utxos = []
@@ -549,20 +561,100 @@
 				return [...Array(Math.ceil(arr.length / size))].map((v, i) => arr.slice(size * i, size + size * i))
 			}
 
+			function getScriptType(script) {
+				if (script[0] === bitcoin.opcodes.OP_1 && script[1] === 32) {
+					return 'taproot'
+				}
+
+				if (script[0] == bitcoin.opcodes.OP_0 && script[1] == 20) {
+					return 'bech32'
+				}
+
+				if (script[0] == bitcoin.opcodes.OP_HASH160 && script[1] == 20) {
+					return 'segwit'
+				}
+
+				if (
+					script[0] == bitcoin.opcodes.OP_DUP &&
+					script[1] == bitcoin.opcodes.OP_HASH160 &&
+					script[2] == 20
+				) {
+					return 'legacy'
+				}
+			}
+
+			function getAddressScript(address) {
+				return bitcoin.address.toOutputScript(address, getConfig()['network'])
+			}
+
+			function validateAddress(address) {
+				try {
+					getAddressScript(address)
+					return true
+				} catch (e) {
+					console.log(e)
+					return false
+				}
+			}
+
+			function getAddress(keys) {
+				const network = getConfig()['network']
+				const addrType = getAddressType()
+
+				if (addrType === 'taproot') {
+					const internalPubkey = keys.publicKey.slice(1, 33)
+					return bitcoin.payments.p2tr({
+						internalPubkey,
+						network
+					}).address
+				} else if (addrType === 'bech32') {
+					return bitcoin.payments.p2wpkh({
+						pubkey: keys.publicKey,
+						network
+					}).address
+				} else if (addrType === 'segwit') {
+					const redeem = bitcoin.payments.p2wpkh({
+						pubkey: keys.publicKey,
+						network
+					})
+					return bitcoin.payments.p2sh({
+						redeem,
+						network
+					}).address
+				} else if (addrType === 'legacy') {
+					return bitcoin.payments.p2pkh({
+						pubkey: keys.publicKey,
+						network
+					}).address
+				}
+			}
+
+			// Convert satoshis to readable amount
+			function amountFormat(amount, invert = false) {
+				const decimals = getConfig()['decimals']
+				if (!invert) {
+					return Number(bigDecimal.divide(amount, 10 ** decimals, decimals))
+				} else {
+					// Fixes 0.00013 * 1000 => 0.12999999999999998
+					// return Math.floor(amount * 10 ** decimals)
+					return Math.floor(Number(bigDecimal.multiply(amount, 10 ** decimals)))
+				}
+			}
+
 			// Messages
-			var messages = initMessages()
+			let messages = initMessages()
 
 			function initMessages() {
 				return {
 					'settings': {
 						'typeSwitched': function (type) {
-							return getText('address-type-changed') + ' <b>' + type + '</b>'
+							return `${getText('address-type-changed')} <b>${type}</b>`
 						},
 						'backendSwitched': function (url) {
-							return getText('backend-switched') +  ' <b>' + url + '</b>'
+							return `${getText('backend-switched')} <b>${url}</b>`
 						},
 						'backendNotWorking': function (url) {
-							return '<b>' + url + '</b> ' + getText('backend-down')
+							return `<b>${url}</b ${getText('backend-down')}`
 						}
 					},
 					'error': {
@@ -600,11 +692,11 @@
 			}
 
 			function initLang() {
-				var language = readCookie('language')
-				var set_lang = 'en'
+				let language = readCookie('language')
+				let set_lang = 'en'
 
-				if (language == null || walletLanguages[language] == undefined) {
-					var user_lang = navigator.language.substr(0, 2)
+				if (!language || !walletLanguages[language]) {
+					const user_lang = navigator.language.substr(0, 2)
 					if (user_lang in walletLanguages) {
 						set_lang = user_lang
 					}
@@ -637,10 +729,7 @@
 
 			// Get current wallet language translation token
 			function getText(token) {
-				var language = readCookie('language')
-				if (language == undefined) {
-					language = initLang()
-				}
+				const language = readCookie('language') || initLang()
 
 				if (token in walletLanguages[language]) {
 					return walletLanguages[language][token]
@@ -651,8 +740,8 @@
 
 			// Get current network config
 			function getConfig() {
-				var network = readCookie('network')
-				if (network == null || networkConfigs[network] == undefined) {
+				let network = readCookie('network')
+				if (!network || !networkConfigs[network]) {
 					setCookie('network', Object.keys(networkConfigs)[0], 60)
 					network = readCookie('network')
 				}
@@ -663,7 +752,7 @@
 			// Switch network
 			function switchConfig(network, page = '') {
 				network = network.toUpperCase()
-				if (networkConfigs[network] != undefined & networkConfigs[network] != getConfig()) {
+				if (networkConfigs[network] && networkConfigs[network] !== getConfig()) {
 					setCookie('network', network, 60)
 					closeWallet()
 					displayNetworks()
@@ -675,19 +764,19 @@
 
 			// Display networks list
 			function displayNetworks() {
-				network = getConfig()
+				const network = getConfig()
 				$('#network-versions').text(network['name'])
 				$('#network-list .dropdown-menu').empty()
 
-				for (var key in networkConfigs) {
+				for (const key in networkConfigs) {
 					$('#network-list .dropdown-menu').append(`<a class="dropdown-item ${networkConfigs[key]['name'] == network['name'] ? 'active' : ''}" href="#/network/${key}">${networkConfigs[key]['name']}</a>`)
 				}
 			}
 
 			// Get current address type
 			function getAddressType() {
-				var type = readCookie('type')
-				if (type == null || !['taproot', 'bech32', 'segwit', 'legacy'].includes(type)) {
+				let type = readCookie('type')
+				if (!type || !['taproot', 'bech32', 'segwit', 'legacy'].includes(type)) {
 					setCookie('type', 'legacy', 60)
 					type = readCookie('type')
 				}
@@ -704,8 +793,8 @@
 
 			// Get current wallet backend
 			function getBackend() {
-				var backend = readCookie('backend')
-				if (backend == null) {
+				let backend = readCookie('backend')
+				if (!backend) {
 					setCookie('backend', getConfig()['api'], 60)
 					backend = readCookie('backend')
 				}
@@ -722,10 +811,10 @@
 
 			// Set cookie
 			function setCookie(name, value, days) {
-				var expires
+				let expires
 
 				if (days) {
-					var date = new Date();
+					const date = new Date();
 					date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
 					expires = '; expires=' + date.toGMTString();
 				} else {
@@ -736,10 +825,10 @@
 
 			// Read cookie
 			function readCookie(name) {
-				var nameEQ = encodeURIComponent(name) + '=';
-				var ca = document.cookie.split(';');
-				for (var i = 0; i < ca.length; i++) {
-					var c = ca[i];
+				const nameEQ = encodeURIComponent(name) + '=';
+				const ca = document.cookie.split(';');
+				for (let i = 0; i < ca.length; i++) {
+					let c = ca[i];
 					while (c.charAt(0) === ' ') c = c.substring(1, c.length);
 					if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
 				}
@@ -752,18 +841,18 @@
 
 			// SPA router function
 			function routePage() {
-				var urlParams = readParams()
-				if (window.location.hash == '') {
+				const urlParams = readParams()
+				if (window.location.hash === '') {
 					window.location.replace(window.location.href.split('#')[0] + '#/')
 				}
 
-				if (urlParams[0] == '#') {
-					var pageName = urlParams[1] != '' ? urlParams[1] : 'homepage'
-					var templateName = '#' + pageName
+				if (urlParams[0] === '#') {
+					const pageName = urlParams[1] || 'homepage'
+					const templateName = `#${pageName}`
 						
 					$('.router-link').removeClass('active')
-					$('.router-link[data-route=' + pageName + ']').addClass('active')
-					if ($('.router-page:visible').attr('id') != urlParams[1]) {
+					$(`.router-link[data-route=${pageName}]`).addClass('active')
+					if ($('.router-page:visible').attr('id') !== urlParams[1]) {
 						$('div.router-page').hide()
 						if ($(templateName).length) {
 							$(templateName).show()
@@ -790,8 +879,8 @@
 
 						// Swith network
 						case 'network':
-							network = urlParams[2]
-							if (network != undefined) {
+							const network = urlParams[2]
+							if (network) {
 								switchConfig(network)
 							}
 
@@ -807,8 +896,8 @@
 
 			// Switch router page
 			function switchPage(url = '', params = []) {
-				params = params.length > 0 ? '/' + params.join('/') : ''
-				window.location.hash = '#' + '/' + url + params;
+				params = params.length > 0 ? `/${params.join('/')}` : ''
+				window.location.hash = `#/${url}${params}`;
 			}
 
 			// Read URL params
@@ -818,7 +907,7 @@
 
 			// Set window title
 			function setTitle(title) {
-				document.title = title + ' | ' + getConfig()['title'];
+				document.title = `${title} | ${getConfig()['title']}`;
 			}
 
 			// Broadcast tx
@@ -880,7 +969,7 @@
 
 				const data = await resp.json()
 
-				// Return UTXOs in ascending order as we want to spend the oldest coins first
+				// Return UTXOs in an ascending order as we want to spend the oldest coins first
 				return data.sort((a, b) => {
 					if (a.height === b.height) {
 						return a.vout - b.vout
@@ -915,18 +1004,6 @@
 				return results
 			}
 
-			// Convert satoshis to readable amount
-			function amountFormat(amount, invert = false) {
-				var decimals = getConfig()['decimals']
-				if (!invert) {
-					return Number(bigDecimal.divide(amount, 10 ** decimals, decimals))
-				} else {
-					// Fixes 0.00013 * 1000 => 0.12999999999999998
-					// return Math.floor(amount * 10 ** decimals)
-					return Math.floor(Number(bigDecimal.multiply(amount, 10 ** decimals)))
-				}
-			}
-
 			// Show big error message at the top of the page :D 
 			function showMessage(message) {
 				$('#error-message').html(message)
@@ -954,16 +1031,16 @@
 				$('.coinbase-balance').hide()
 
 				try {
-					let coinbase = 0
-					const utxos = await getUnspent(globalData.address)
-					const utxoBalance = utxos.reduce((acc, curr) => {
-						if (curr.coinbase && curr.confirmations < 100) {
-							coinbase += Number(curr.value)
-						} else {
-							acc += Number(curr.value)
+					let coinbase = 0;
+					let utxoBalance = 0;
+					const utxos = (await getUnspent(globalData.address)).filter((utxo) => {
+						if (utxo.coinbase && utxo.confirmations < 100) {
+							coinbase += Number(utxo.value)
+							return false
 						}
-						return acc
-					}, 0)
+						utxoBalance += Number(utxo.value)
+						return true
+					})
 
 					globalData.balance = utxoBalance
 					globalData.coinbase = coinbase
@@ -987,7 +1064,7 @@
 
 			// Set title
 			function setHomeTitle() {
-				if (globalData.keys != undefined) {
+				if (globalData.keys) {
 					setTitle(getText('address') + ' ' + globalData.address)
 				} else {
 					setTitle(getText('open-wallet'))
@@ -1019,7 +1096,7 @@
 				$('#wallet-address').html(address)
 				$('#open-block').addClass('d-none')
 				$('#wallet-block').removeClass('d-none')
-				$('#history-link').attr('href', blockExplorer.address(address))
+				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`)
 				$('#send-fee').attr('placeholder', getText('fee') + ' (' + getText('recommended') + ' ' + globalData.rfee + ' ' + getConfig()['ticker'] + ')')
 				showQrAddress(getConfig()['uri'] + address)
 
@@ -1030,6 +1107,7 @@
 			}
 
 			function showConfirmation(amount) {
+				globalData.resetTx()
 				$('#confirm-amount').text(amount + ' ' + getConfig()['ticker'])
 				$('#send-modal').modal('toggle')
 				$('#send-title').text(messages.title['sure'])
@@ -1044,8 +1122,8 @@
 				$('#status-screen span').html('')
 
 				$.each($('#send-outputs .send-outputs-item'), function(key, item) {
-					var address = $('[name="send-address"]', item).val().trim()
-					var value = $('[name="send-ammount"]', item).val()
+					const address = $('[name="send-address"]', item).val().trim()
+					const value = $('[name="send-ammount"]', item).val()
 					globalData.tx.outputs.push({
 						address,
 						value: amountFormat(value, true)
@@ -1057,7 +1135,7 @@
 			}
 
 			function stopStream() {
-				if (stream != undefined) {
+				if (stream) {
 					stream.getTracks().forEach(function(track) {
 						track.stop()
 					})
@@ -1065,9 +1143,9 @@
 			}
 
 			function startStream() {
-				var canvasElement = document.getElementById('scan-canvas')
-				var canvas = canvasElement.getContext('2d')
-				var video = document.createElement('video')
+				const canvasElement = document.getElementById('scan-canvas')
+				const canvas = canvasElement.getContext('2d')
+				const video = document.createElement('video')
 				canvasElement.hidden = true
 
 				$('#loading-message').text(getText('webcam-message'))
@@ -1084,7 +1162,7 @@
 
 				function tick() {
 					$('#loading-message').text(getText('webcam-loading'))
-					var stop = false
+					let stop = false
 					if (video.readyState === video.HAVE_ENOUGH_DATA) {
 						$('#loading-message').addClass('d-none')
 						canvasElement.hidden = false
@@ -1092,19 +1170,19 @@
 						canvasElement.height = video.videoHeight
 						canvasElement.width = video.videoWidth
 						canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height)
-						var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height)
-						var code = jsQR(imageData.data, imageData.width, imageData.height, {
+						const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height)
+						const code = jsQR(imageData.data, imageData.width, imageData.height, {
 							inversionAttempts: "dontInvert",
 						})
 						
 						if (code) {
-							var address = code.data
+							let address = code.data
 							if (address.startsWith(getConfig()['uri'])) {
 								address = address.replace(getConfig()['uri'], '')
 							}
 
 							if (validateAddress(address)) {
-								if ($('#send-outputs input[name="send-address"]').last().val() != '') {
+								if ($('#send-outputs input[name="send-address"]').last().val()) {
 									$('#add-output').click()
 								}
 
@@ -1174,7 +1252,7 @@
 					if (selectedAmounts < amount) {
 						console.log(`Transaction canceled due to insufficient UTXO amount, wants ${amount} selected ${selectedAmounts}`)
 						showMessage(messages.error['not-enough-funds'])
-						return
+						throw new Error(messages.error['not-enough-funds'])
 					}
 					
 					// Credit change amount to wallet if they are more than dust
@@ -1266,7 +1344,7 @@
 					const txid = await transactionBroadcast(psbt.extractTransaction().toHex())
 
 					$('#status-screen span').html(`
-						<a href="${blockExplorer.tx(txid)}" target="_blank">
+						<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
 							${txid}
 						</a> 
 					`)
@@ -1297,80 +1375,12 @@
 				setHomeTitle()
 			}
 
-			function getScriptType(script) {
-				if (script[0] === bitcoin.opcodes.OP_1 && script[1] === 32) {
-					return 'taproot'
-				}
-
-				if (script[0] == bitcoin.opcodes.OP_0 && script[1] == 20) {
-					return 'bech32'
-				}
-
-				if (script[0] == bitcoin.opcodes.OP_HASH160 && script[1] == 20) {
-					return 'segwit'
-				}
-
-				if (
-					script[0] == bitcoin.opcodes.OP_DUP &&
-					script[1] == bitcoin.opcodes.OP_HASH160 &&
-					script[2] == 20
-				) {
-					return 'legacy'
-				}
-			}
-
-			function getAddressScript(address) {
-				return bitcoin.address.toOutputScript(address, getConfig()['network'])
-			}
-
-			function getAddress(keys) {
-				const network = getConfig()['network']
-				const addrType = getAddressType()
-
-				if (addrType === 'taproot') {
-					const internalPubkey = keys.publicKey.slice(1, 33)
-					return bitcoin.payments.p2tr({
-						internalPubkey,
-						network
-					}).address
-				} else if (addrType === 'bech32') {
-					return bitcoin.payments.p2wpkh({
-						pubkey: keys.publicKey,
-						network
-					}).address
-				} else if (addrType === 'segwit') {
-					const redeem = bitcoin.payments.p2wpkh({
-						pubkey: keys.publicKey,
-						network
-					})
-					return bitcoin.payments.p2sh({
-						redeem,
-						network
-					}).address
-				} else if (addrType === 'legacy') {
-					return bitcoin.payments.p2pkh({
-						pubkey: keys.publicKey,
-						network
-					}).address
-				}
-			}
-
-			function validateAddress(address) {
-				try {
-					getAddressScript(address)
-					return true
-				} catch (e) {
-					console.log(e)
-					return false
-				}
-			}
-
 			// Create new wallet
 			$('#footer-create').click(function() {
-				var keys = bitcoin.ECPair.makeRandom({'network': getConfig()['network']})
-				var address = getAddress(keys)
+				const keys = bitcoin.ECPair.makeRandom({'network': getConfig()['network']})
+				const address = getAddress(keys)
 
-				if (address != undefined) {
+				if (address) {
 					$('#create-keys-address input').val(address)
 					$('#create-keys-pubkey input').val(keys.publicKey.toString('hex'))
 					$('#create-keys-privkey input').val(keys.toWIF())
@@ -1384,7 +1394,7 @@
 					const txid = await transactionBroadcast(rawtx.val())
 
 					showMessage(`
-						${messages.tx['success']}<a href="` + blockExplorer.tx(txid) + `" target="_blank">` + txid + `</a>
+						${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">` + txid + `</a>
 					`)
 				} catch (err) {
 					console.log(err)
@@ -1419,13 +1429,13 @@
 				routePage()
 
 				$('.tab-link').click(function(e) {
-					var tabFamily = $(this).data('tab-family')
-					var tabName = $(this).data('tab-name')
+					const tabFamily = $(this).data('tab-family')
+					const tabName = $(this).data('tab-name')
 
-					$('#' + tabFamily + ' .tab-item').addClass('d-none')
-					$('#' + tabFamily + ' .card-header .card-header-tabs .nav-link').removeClass('active')
+					$(`#${tabFamily} .tab-item`).addClass('d-none')
+					$(`#${tabFamily} .card-header .card-header-tabs .nav-link`).removeClass('active')
 				
-					$('#' + tabFamily + ' [data-tab=' + tabName + ']').removeClass('d-none')
+					$(`#${tabFamily} [data-tab='${tabName}']`).removeClass('d-none')
 					$(this).addClass('active')
 					
 					e.preventDefault()
@@ -1437,9 +1447,10 @@
 				}
 
 				$('#send-tx').click(function() {
-					var error = false
-					var txFee = ($('#send-fee').val() != '') ? $('#send-fee').val() : globalData.rfee
-					var total = 0
+					let error = false
+					let total = 0
+
+					const txFee = $('#send-fee').val() || globalData.rfee
 
 					if ((isNaN(txFee)) || txFee <= 0) {
 						showMessage(messages.error['not-valid-fee'])
@@ -1452,8 +1463,8 @@
 					}
 
 					$.each($('#send-outputs .send-outputs-item'), function(key, item) {
-						var address = $('[name="send-address"]', item).val().trim()
-						var amount = $('[name="send-ammount"]', item).val()
+						const address = $('[name="send-address"]', item).val().trim()
+						const amount = $('[name="send-ammount"]', item).val()
 
 						if ((isNaN(amount)) || amount <= 0) {
 							showMessage(messages.error['not-valid-amount'])
@@ -1465,10 +1476,10 @@
 							error = true
 						}
 
-						total += amount * 1
+						total += Number(amount)
 					})
 
-					total += txFee * 1
+					total += Number(txFee)
 					total = parseFloat(total.toFixed(getConfig()['decimals']))
 
 					if (!error) {
@@ -1482,8 +1493,8 @@
 
 				// Open wallet by WIF key
 				$('#open-key-form').submit(function(e){
-					var wif = $('#passphrase').val().trim()
-					var wifLength = wif.length
+					const wif = $('#passphrase').val().trim()
+					const wifLength = wif.length
 					if ([51, 52].includes(wifLength)) {
 						try {
 							globalData.keys = bitcoin.ECPair.fromWIF(wif, getConfig()['network'])
@@ -1503,19 +1514,18 @@
 
 				// Open wallet using email and password
 				$("#open-regular-form").submit(function(e) {
-					var email = $("#open-email").val().toLowerCase()
-					var pass = $("#open-password").val()
-					var passConfirm = $("#open-password-confirm").val()
+					const email = $("#open-email").val().toLowerCase()
+					const pass = $("#open-password").val()
+					const passConfirm = $("#open-password-confirm").val()
 					if (email.match(/[\s\w\d]+@[\s\w\d]+/g)) {
 						if (pass.length >= 10){
-							if (pass == passConfirm) {
-								var pass = pass
-								var s = email
+							if (pass === passConfirm) {
+								let s = email
 								s += '|' + pass + '|'
 								s += s.length + '|!@' + ((pass.length * 7) + email.length) * 7
-								var regchars = (pass.match(/[a-z]+/g)) ? pass.match(/[a-z]+/g).length : 1
-								var regupchars = (pass.match(/[A-Z]+/g)) ? pass.match(/[A-Z]+/g).length : 1
-								var regnums = (pass.match(/[0-9]+/g)) ? pass.match(/[0-9]+/g).length : 1
+								const regchars = (pass.match(/[a-z]+/g)) ? pass.match(/[a-z]+/g).length : 1
+								const regupchars = (pass.match(/[A-Z]+/g)) ? pass.match(/[A-Z]+/g).length : 1
+								const regnums = (pass.match(/[0-9]+/g)) ? pass.match(/[0-9]+/g).length : 1
 								s += ((regnums + regchars) + regupchars) * pass.length + '3571'
 								s += (s + '' + s)
 
