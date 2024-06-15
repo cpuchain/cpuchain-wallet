@@ -210,7 +210,7 @@
 								<div class="tab-item" data-tab="wallet-balance">
 									<div id="qr-code-addres" class="qr-code"></div>
 									<div id="wallet-address"></div>
-									<div class="wallet-balance mb-0 pb-0 c-pointer">
+									<div class="wallet-balance update-balance mb-0 pb-0 c-pointer">
 										<span class="text-monospace amount"></span>
 										<span class="ticker" tkey="loading"></span>
 									</div>
@@ -227,7 +227,7 @@
 								<div class="mb-2">
 									<span class="">
 										<span tkey="available-balance"></span>
-										<b class="wallet-balance balance-small c-pointer">
+										<b class="wallet-balance fill-balance balance-small c-pointer">
 											<span class="amount"></span>
 											<span class="ticker" tkey="loading"></span>
 										</b>
@@ -254,7 +254,7 @@
 								<div id="send-outputs">
 									<div class="input-group send-outputs-item mb-2">
 										<input name="send-address" class="form-control" type="text" value="" tkey="enter-address">
-										<input name="send-ammount" class="form-control" type="text" value="" tkey="amount">
+										<input name="send-amount" class="form-control" type="text" value="" tkey="amount">
 										<div class="input-group-append">
 											<button id="add-output" class="btn btn-outline-dark">
 												<span class="fa-solid fa-circle-plus"></span>
@@ -264,7 +264,7 @@
 								</div>
 
 								<div class="input-group">
-									<input id="send-fee" class="form-control" placeholder="Fee" type="text" value="">
+									<input id="op-return-data" class="form-control" placeholder="(Optional) OP_RETURN data" type="text" value="">
 									<div class="input-group-append">
 										<button class="btn btn-outline-dark b-width" type="submit" id="send-tx" tkey="send"></button>
 									</div>
@@ -473,6 +473,7 @@
 
 		<!-- All magic is here :D -->
 		<script>
+			const { Buffer, ECPair } = bitcoin
 			const TX_CHUNK_SIZE = 10
 
 			// Config
@@ -509,7 +510,7 @@
 					ticker: 'CPU',
 					decimals: 8,
 					fee: 0.00001,
-					explorer: 'https://explorer.cpuchain.org/#',
+					explorer: 'https://explorer.cpuchain.org/testnet/#',
 					network: {
 						messagePrefix: '\x19CPUchain Signed Message:\n',
 						bip32: {
@@ -561,6 +562,19 @@
 				return [...Array(Math.ceil(arr.length / size))].map((v, i) => arr.slice(size * i, size + size * i))
 			}
 
+			function checkHex(hexStr) {
+				try {
+					if (hexStr.slice(0, 2) !== '0x') {
+						return false
+					}
+
+					BigInt(hexStr)
+					return true
+				} catch {
+					return false
+				}
+			}
+
 			function getScriptType(script) {
 				if (script[0] === bitcoin.opcodes.OP_1 && script[1] === 32) {
 					return 'taproot'
@@ -581,6 +595,23 @@
 				) {
 					return 'legacy'
 				}
+
+				return 'unknown'
+			}
+
+			function getBytes(type, isInput = true) {
+				switch (type) {
+					case 'taproot':
+						return isInput ? 58 : 43;
+					case 'bech32':
+						return isInput ? 68 : 31;
+					case 'segwit':
+						return isInput ? 91 : 32;
+					case 'legacy':
+						return isInput ? 148 : 34;
+					default:
+						return isInput ? 392 : 34;
+				}
 			}
 
 			function getAddressScript(address) {
@@ -591,30 +622,29 @@
 				try {
 					getAddressScript(address)
 					return true
-				} catch (e) {
-					console.log(e)
+				} catch {
 					return false
 				}
 			}
 
-			function getAddress(keys) {
+			function getAddress(pubkey) {
 				const network = getConfig()['network']
 				const addrType = getAddressType()
 
 				if (addrType === 'taproot') {
-					const internalPubkey = keys.publicKey.slice(1, 33)
+					const internalPubkey = pubkey.slice(1, 33)
 					return bitcoin.payments.p2tr({
 						internalPubkey,
 						network
 					}).address
 				} else if (addrType === 'bech32') {
 					return bitcoin.payments.p2wpkh({
-						pubkey: keys.publicKey,
+						pubkey,
 						network
 					}).address
 				} else if (addrType === 'segwit') {
 					const redeem = bitcoin.payments.p2wpkh({
-						pubkey: keys.publicKey,
+						pubkey,
 						network
 					})
 					return bitcoin.payments.p2sh({
@@ -623,7 +653,7 @@
 					}).address
 				} else if (addrType === 'legacy') {
 					return bitcoin.payments.p2pkh({
-						pubkey: keys.publicKey,
+						pubkey,
 						network
 					}).address
 				}
@@ -932,7 +962,7 @@
 			// Estimate fee
 			async function estimateFee() {
 				try {
-					const resp = await fetch(`${getBackend()}/estimatefee/10`, {
+					const resp = await fetch(`${getBackend()}/estimatefee/1`, {
 						method: 'GET',
 						headers: {
 							'Content-Type': 'application/json'
@@ -1084,7 +1114,7 @@
 
 			// Open wallet by key
 			function openWallet(keys) {
-				const address = getAddress(keys)
+				const address = getAddress(keys.publicKey)
 				const redeem = getAddressScript(address).toString('hex')
 
 				globalData.address = address
@@ -1097,7 +1127,6 @@
 				$('#open-block').addClass('d-none')
 				$('#wallet-block').removeClass('d-none')
 				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`)
-				$('#send-fee').attr('placeholder', getText('fee') + ' (' + getText('recommended') + ' ' + globalData.rfee + ' ' + getConfig()['ticker'] + ')')
 				showQrAddress(getConfig()['uri'] + address)
 
 				// Init wallet stuffs
@@ -1123,15 +1152,21 @@
 
 				$.each($('#send-outputs .send-outputs-item'), function(key, item) {
 					const address = $('[name="send-address"]', item).val().trim()
-					const value = $('[name="send-ammount"]', item).val()
+					const value = $('[name="send-amount"]', item).val()
 					globalData.tx.outputs.push({
 						address,
-						value: amountFormat(value, true)
+						value: amountFormat(value, true),
 					})
 				})
 
+				if ($('#op-return-data').val()) {
+					globalData.tx.outputs.push({
+						returnData: $('#op-return-data').val(),
+						value: 0,
+					})
+				}
+
 				globalData.tx.amount = amountFormat(amount, true)
-				globalData.tx.fee = amountFormat($('#send-fee').val() || globalData.rfee, true)
 			}
 
 			function stopStream() {
@@ -1208,20 +1243,223 @@
 				startStream()
 			}
 
-			async function sendTransaction() {
-				try {
-					const network = getConfig()['network']
-					const keys = globalData.keys
-					// vout
-					const outputs = globalData.tx.outputs
-					// sum of vout + fees
-					const amount = globalData.tx.amount
-					const address = globalData.address
-					
-					const minFee = globalData.tx.fee
+			// Pick UTXOS by the desired outputs
+			// This is not necessary if you want to select all UTXO without limiting length
+			// Spend old UTXO first
+			function getInputs(utxos, outputs, spendAll = false) {
+				const outputAmounts = outputs.reduce((acc, output) => {
+					acc += output.value
+					return acc
+				}, 0)
+				
+				const { inputs } = utxos.reduce((acc, tx) => {
+					if (!spendAll && acc.amounts > outputAmounts) {
+						return acc
+					}
+					acc.amounts += Number(tx.value)
+					acc.inputs.push(tx)
+					return acc
+				}, {
+					amounts: 0,
+					inputs: []
+				})
 
-					const psbt = new bitcoin.Psbt({ network })
+				// Prevent the transaction being too big
+				// One transaction could only relay 100KB dividing with legacy inputs it could only have 675 maximum
+				if (inputs.length + outputs.length > 650) {
+					const error = `Selected UTXO is too big (inputs: ${inputs.length}, outputs: ${outputs.length}), make sure to consolidate UTXOs before using it`
+					throw new Error(error)
+				}
+
+				return inputs
+			}
+
+			/**
+			 * Build bitcoinjs PSBT object
+			 * @param {Buffer} [publicKey] Buffer array of signer's public key
+			 * @param {Array<tx>} [txs] Array of transaction object fetched from backend, can be empty when segwit inputs
+			 * @param {Array<inputs>} [inputs] Array of utxo object fetched from backend, 
+			 * @param {Array<outputs>} [outputs] Array of desired payment outputs
+			 * @param {string} [changeAddress] Address to receive change amounts
+			 */
+			function buildPsbt(publicKey, txs, inputs, outputs, changeAddress) {
+				const feeRates = Number(globalData.rfee)
+				// todo: add config for this
+				const feeMultiplier = 2
+				const feePerByte = Math.round(feeRates * feeMultiplier * (10 ** getConfig()['decimals']) / 1000)
+
+				const network = getConfig()['network']
+
+				let inputAmounts = 0
+				let outputAmounts = 0
+
+				let inputBytes = 0
+				// Add change address bytes
+				let outputBytes = getBytes(getScriptType(getAddressScript(changeAddress)), false)
+
+				const psbt = new bitcoin.Psbt({ network })
+
+				// Add inputs and sign them
+				inputs.forEach((input) => {
+					const hash = input.txid
+					const index = input.vout
+					const value = input.value = Number(input.value)
+
+					const tx = txs.find(t => t.txid === hash)
+					const vout = (tx?.vout || []).find(v => v.n === index)
+
+					const script = vout ? Buffer.from(vout.hex, 'hex') : getAddressScript(getAddress(publicKey))
+					const type = input.type = getScriptType(script)
+					inputAmounts += value
+					inputBytes += input.bytes = getBytes(type)
 					
+					// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
+					if (type === 'taproot') {
+						const tapInternalKey = publicKey.slice(1, 33)
+						psbt.addInput({
+							hash,
+							index,
+							witnessUtxo: {
+								script,
+								value
+							},
+							tapInternalKey
+						})
+					} else if (type === 'bech32') {
+						psbt.addInput({
+							hash,
+							index,
+							witnessUtxo: {
+								script,
+								value
+							}
+						})
+					} else if (type === 'segwit') {
+						const { output: redeemScript } = bitcoin.payments.p2wpkh({
+							pubkey: publicKey,
+							network,
+						})
+						psbt.addInput({
+							hash,
+							index,
+							witnessUtxo: {
+								script,
+								value
+							},
+							redeemScript
+						})
+					} else {
+						// Skip for simulation (should error when signing phase)
+						if (!tx?.hex) {
+							return
+						}
+
+						psbt.addInput({
+							hash,
+							index,
+							nonWitnessUtxo: Buffer.from(tx.hex, 'hex')
+						})
+					}
+				})
+
+				outputs.forEach((output) => {
+					// Handle OP_RETURN
+					if (output.returnData && output.value === 0) {
+						const data = checkHex(output.returnData)
+							? Buffer.from(output.returnData.slice(2), 'hex')
+							: Buffer.from(output.returnData, 'utf8')
+
+						output.script = bitcoin.payments.embed({
+							data: [data]
+						}).output
+
+						outputBytes += output.bytes = data.length + 12
+
+						psbt.addOutput(output)
+						return
+					}
+
+					// Special case for consolidation or to estimate fees when max spent
+					if (!output?.value) {
+						return
+					}
+
+					outputAmounts += output.value
+					outputBytes += output.bytes = getBytes(getScriptType(getAddressScript(output.address)), false)
+
+					psbt.addOutput(output)
+				})
+				
+				const vBytes = 10 + inputBytes + outputBytes
+
+				const fees = vBytes * feePerByte
+
+				const change = inputAmounts - outputAmounts - fees
+
+				// If the user doesn't have enough funds to pay fees cancel the tx
+				if (change < 0) {
+					const error = `Insufficient amount to cover fees, wants ${amountFormat(outputAmounts + fees)} have ${amountFormat(inputAmounts)}`
+					throw new Error(error)
+				}
+
+				if (change > 0) {
+					const output = { address: changeAddress, value: change }
+
+					outputAmounts += output.value
+					outputBytes += output.bytes = getBytes(getScriptType(getAddressScript(output.address)), false)
+					outputs.push(output)
+					psbt.addOutput(output)
+				}
+
+				const createdTx = {
+					fees: amountFormat(fees),
+					inputAmounts: amountFormat(inputAmounts),
+					inputs,
+					outputAmounts: amountFormat(outputAmounts),
+					outputs,
+					vBytes,
+				}
+
+				console.log('UTXO:', createdTx)
+
+				return {
+					psbt,
+					...createdTx
+				}
+			}
+
+			function signPsbt(psbt, inputs, keys) {
+				inputs.forEach(({ type }, index) => {
+					// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
+					if (type === 'taproot') {
+						const tapKey = keys.publicKey.slice(1, 33)
+						const tweakedKey = keys.tweak(bitcoin.crypto.taggedHash('TapTweak', tapKey))
+						psbt.signInput(index, tweakedKey)
+						return
+					}
+					psbt.signInput(index, keys)
+				})
+
+				psbt.finalizeAllInputs()
+
+				return psbt.extractTransaction()
+			}
+
+			function getMaxSpendable(changeAddress = globalData.address) {
+				const publicKey = globalData.keys.publicKey
+				const inputs = globalData.utxos
+
+				try {
+					const { outputAmounts, fees } = buildPsbt(publicKey, [], inputs, [], changeAddress)
+					return outputAmounts - fees
+				// If we have less than fees
+				} catch {
+					return 0
+				}
+			}
+
+			async function sendTransaction() {
+				try {					
 					$('#send-cancel').addClass('disabled')
 					$('#send-confirm').addClass('disabled')
 					$('#confirm-screen').addClass('d-none')
@@ -1230,118 +1468,22 @@
 					$('#status-screen .extra-info').empty()
 					$('#status-screen span').html(messages.tx['generating'])
 
-					outputs.forEach((output) => {
-						psbt.addOutput(output)
-					})
-					
-					let selectedAmounts = 0
-					const selectedUtxos = [...globalData.utxos].filter(tx => {
-						if (selectedAmounts > amount) {
-							return false
-						}
-						
-						selectedAmounts += Number(tx.value)
-						return true
-					})
-
-					console.log(`Selected amounts: ${amountFormat(selectedAmounts)} ${selectedUtxos.length} inputs`)
-					console.log('Selected UTXOs', selectedUtxos)
-					
-					// Maybe either our API is behind blocks or user spending tx too quickly
-					// This doesn't occur often
-					if (selectedAmounts < amount) {
-						console.log(`Transaction canceled due to insufficient UTXO amount, wants ${amount} selected ${selectedAmounts}`)
-						showMessage(messages.error['not-enough-funds'])
-						throw new Error(messages.error['not-enough-funds'])
-					}
-					
-					// Credit change amount to wallet if they are more than dust
-					const change = selectedAmounts - amount
-					if (change > minFee) {
-						psbt.addOutput({ address, value: change })
-					}
-
-					console.log({
-						selectedAmounts,
-						amount,
-						change
-					})
+					const keys = globalData.keys
+					const outputs = globalData.tx.outputs
+					const inputs = getInputs(globalData.utxos, outputs)
 
 					$('#status-screen span').html(messages.tx['loading-utxo'])
-					
-					const txs = await getTransactions([...new Set(selectedUtxos.map(t => t.txid))])
-					
-					// Add inputs and sign them
-					const scripts = selectedUtxos.map(({ txid, vout: index, value }) => {
-						const tx = txs.find(t => t.txid === txid)
-						const vout = tx.vout.find(v => v.n === index)
-						value = Number(value)
-						
-						const script = bitcoin.Buffer.from(vout.hex, 'hex')
-						const type = getScriptType(script)
-						
-						// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
-						if (type === 'taproot') {
-							const tapInternalKey = keys.publicKey.slice(1, 33)
-							psbt.addInput({
-								hash: txid,
-								index,
-								witnessUtxo: {
-									script,
-									value
-								},
-								tapInternalKey
-							})
-						}	else if (type === 'bech32') {
-							psbt.addInput({
-								hash: txid,
-								index,
-								witnessUtxo: {
-									script,
-									value
-								}
-							})
-						} else if (type === 'segwit') {
-							const p2sh_p2wpkh = bitcoin.payments.p2sh({
-								redeem: script,
-								network
-							})
-							psbt.addInput({
-								hash: txid,
-								index,
-								witnessUtxo: {
-									script: p2sh_p2wpkh.output,
-									value
-								},
-								redeemScript: script
-							})
-						} else {
-							psbt.addInput({
-								hash: txid,
-								index,
-								nonWitnessUtxo: bitcoin.Buffer.from(tx.hex, 'hex')
-							})
-						}
 
-						return {
-							type,
-							value
-						}
-					})
+					// Legacy inputs should have the full transaction input according to the BIP-174 standard
+					const txs = getAddressType() === 'legacy'
+						? await getTransactions([...new Set(inputs.map(t => t.txid))])
+						: []
 
-					scripts.forEach(({ type, value }, index) => {
-						// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
-						if (type === 'taproot') {
-							const tapKey = keys.publicKey.slice(1, 33)
-							const tweakedKey = keys.tweak(bitcoin.crypto.taggedHash('TapTweak', tapKey))
-							psbt.signInput(index, tweakedKey)
-							return
-						}
-						psbt.signInput(index, keys)
-					})
+					const { psbt } = buildPsbt(keys.publicKey, txs, inputs, outputs, globalData.address)
 
-					psbt.finalizeAllInputs()
-					const txid = await transactionBroadcast(psbt.extractTransaction().toHex())
+					const tx = signPsbt(psbt, inputs, keys)
+
+					const txid = await transactionBroadcast(tx.toHex())
 
 					$('#status-screen span').html(`
 						<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
@@ -1377,8 +1519,8 @@
 
 			// Create new wallet
 			$('#footer-create').click(function() {
-				const keys = bitcoin.ECPair.makeRandom({'network': getConfig()['network']})
-				const address = getAddress(keys)
+				const keys = ECPair.makeRandom({'network': getConfig()['network']})
+				const address = getAddress(keys.publicKey)
 
 				if (address) {
 					$('#create-keys-address input').val(address)
@@ -1450,21 +1592,9 @@
 					let error = false
 					let total = 0
 
-					const txFee = $('#send-fee').val() || globalData.rfee
-
-					if ((isNaN(txFee)) || txFee <= 0) {
-						showMessage(messages.error['not-valid-fee'])
-						error = true
-					} else {
-						if (txFee < getConfig()['fee']) {
-							showMessage(messages.error['small-fee'])
-							error = true
-						}
-					}
-
 					$.each($('#send-outputs .send-outputs-item'), function(key, item) {
 						const address = $('[name="send-address"]', item).val().trim()
-						const amount = $('[name="send-ammount"]', item).val()
+						const amount = $('[name="send-amount"]', item).val()
 
 						if ((isNaN(amount)) || amount <= 0) {
 							showMessage(messages.error['not-valid-amount'])
@@ -1479,7 +1609,7 @@
 						total += Number(amount)
 					})
 
-					total += Number(txFee)
+
 					total = parseFloat(total.toFixed(getConfig()['decimals']))
 
 					if (!error) {
@@ -1497,7 +1627,7 @@
 					const wifLength = wif.length
 					if ([51, 52].includes(wifLength)) {
 						try {
-							globalData.keys = bitcoin.ECPair.fromWIF(wif, getConfig()['network'])
+							globalData.keys = ECPair.fromWIF(wif, getConfig()['network'])
 						} catch (e) {
 							console.log(e)
 							showMessage(messages.error['bad-priv-key'])
@@ -1537,8 +1667,8 @@
 								$('#open-password').val('')
 								$('#open-password-confirm').val('')
 
-								globalData.keys = bitcoin.ECPair.fromPrivateKey(
-									bitcoin.Buffer.from(s, 'hex'),
+								globalData.keys = ECPair.fromPrivateKey(
+									Buffer.from(s, 'hex'),
 									{'network': getConfig()['network']}
 								)
 								openWallet(globalData.keys)
@@ -1556,9 +1686,18 @@
 				})
 
 				// Check wallet balance on balance label click
-				$('.wallet-balance').click(function(e){
+				$('.update-balance').click(function(e){
 					walletBalance()
 					e.preventDefault()
+				})
+
+				$('.fill-balance').click((e) => {
+					e.preventDefault()
+					let firstAddress = $('[name="send-address"]', $('#send-outputs .send-outputs-item')[0]).val()
+					if (!validateAddress(firstAddress)) {
+						firstAddress = undefined
+					}
+					$('[name="send-amount"]', $('#send-outputs .send-outputs-item')[0]).val(getMaxSpendable(firstAddress))
 				})
 
 				// Confirm transaction sendign (are you sure?)
@@ -1583,7 +1722,7 @@
 					$('#send-outputs').append(`
 						<div class="send-additional-output send-outputs-item input-group mb-2">
 							<input name="send-address" class="form-control" placeholder="${getText('enter-address')}" type="text">
-							<input name="send-ammount" class="form-control" placeholder="${getText('amount')}" type="text">
+							<input name="send-amount" class="form-control" placeholder="${getText('amount')}" type="text">
 							<div class="input-group-append">
 								<button class="btn btn-outline-danger remove-additional-output" type="submit">
 									<span class="fa-solid fa-circle-minus"></span>
