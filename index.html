@@ -1402,7 +1402,7 @@
 					throw new Error(error)
 				}
 
-				if (change > 0) {
+				if (change > fees) {
 					const output = { address: changeAddress, value: change }
 
 					outputAmounts += output.value
