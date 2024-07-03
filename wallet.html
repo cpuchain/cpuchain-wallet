@@ -13004,8 +13004,8 @@ const embedded = {
 				const keyPrefix = electrumKeys[getAddressType()];
 
 				if (keyType === 'mnemonic') {
-					const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic));
-					const path = `m/${getDerivation()}'/${network.network.versions.bip44 || 0}'/0'/0/0`;
+					const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic), network.network);
+					const path = `m/${getDerivation()}'/${network.network.versions.bip44 || 0}'/0'/0/${mnemonicIndex}`;
 
 					keys = root.derivePath(path);
 
@@ -13041,6 +13041,8 @@ const embedded = {
 					globalData.address = globalData.signer.address;
 					// for frontend purpose
 					keys = globalData.signer.privateKey;
+
+					globalData.keys = keys;
 
 				// should check if window.ethereum exists before calling this function
 				} else if (keyType === 'browser') {
@@ -14380,7 +14382,7 @@ const embedded = {
 
 					if (network.isBtc) {
 						const mnemonic = bip39.generateMnemonic(128);
-						const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic));
+						const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic), network.network);
 						const path = `m/${getDerivation()}'/${network.network.versions.bip44 || 0}'/0'/0/0`;
 
 						const keys = root.derivePath(path);
