@@ -6,14 +6,20 @@
   "author": "CPUchain <info@cpuchain.org>",
   "license": "MIT",
   "scripts": {
-    "build": "webpack"
+    "build:bitcoin": "webpack",
+    "build": "html-inline-external --src index.html --dest wallet.html"
   },
   "devDependencies": {
     "@bitcoinerlab/secp256k1": "^1.1.1",
+    "@cpuchain/html-inline-external": "^1.0.10",
+    "bip32": "^4.0.0",
+    "bip39": "^3.1.0",
     "bitcoinjs-lib": "^6.1.5",
     "buffer": "^6.0.3",
+    "coininfo": "^5.2.1",
     "ecpair": "^2.1.0",
     "esbuild-loader": "^4.1.0",
+    "ethers": "^6.13.1",
     "node-polyfill-webpack-plugin": "^4.0.0",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"

@@ -1,4 +1,5 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 module.exports = {
@@ -17,6 +18,13 @@ module.exports = {
     path: path.resolve('.'),
     library: 'bitcoin',
     libraryTarget: 'umd'
+  },
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        extractComments: false,
+      })
+    ]
   },
   plugins: [
     new NodePolyfillPlugin(),

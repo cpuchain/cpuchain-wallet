@@ -5,21 +5,21 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://cdn.datatables.net/v/bs4-4.6.0/jq-3.7.0/dt-2.0.8/datatables.min.css" integrity="sha384-Jf0ltIZwC+aV9/rY5FZ9dojcq44FUi62im7lystWg+6Qo9CNfn+glovFA+jzKrrX" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://unpkg.com/@jsweb/font-awesome-base64@2.4.2/fa-all.css" integrity="sha384-rAubePlPr5GmhldeD91zL0pl+HTbUXQ68qd7Dw9hoghRR4PBSVDG5ms/fhlYX1vW" crossorigin="anonymous">
 
-		<link rel="icon" type="image/png" href="https://cpuchain.org/cpuchain.png">
-		<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
-		
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/cozmo/jsQR@master/dist/jsQR.js"></script>
-		<script src="https://unpkg.com/js-big-decimal@1.3.1/dist/web/js-big-decimal.min.js"></script>
-		<script src="./bitcoinjs.min.js"></script>
+		<link id="coin-favicon" rel="icon" type="image/png" href="logos/cpuchain.png">
+
+		<script src="https://cdn.datatables.net/v/bs4-4.6.0/jq-3.7.0/dt-2.0.8/datatables.min.js" integrity="sha384-YXLhkIEkz0B9qJOuh+JgywjsB4yjYgxB7DCd6zelr/yDqJigjrYdpuytVM9E2nfI" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js" integrity="sha384-xeyyvbIlX+FahWHIZR6gjoC4A1i44cTBxZ330euRbtiXZwfcVDWVeOuJ4sGx8R2d" crossorigin="anonymous"></script>
+		<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
+		<script src="bitcoinjs.min.js"></script>
 		<script src="multilang.js"></script>
+		<script src="abi.js"></script>
+		<script src="logos.js"></script>
 
 		<style>
 			html {
@@ -29,7 +29,7 @@
 				min-height: 100%;
 			}
 			body {
-				font-family: 'Source Sans Pro', sans-serif;
+				font-family: Arial, Helvetica, sans-serif;
 				padding-top: 75px;
 				padding-bottom: 56px;
 				position: relative;
@@ -85,6 +85,9 @@
 					padding-right: 15px;
 					padding-left: 15px;
 				}
+				.mobile-hide {
+					display: none;
+				}
 			}
 			.balance-small {
 				font-size: 15px;
@@ -105,8 +108,8 @@
 		<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
 			<div class="container">
 				<a href="#" class="navbar-brand">
-					<img src="https://cpuchain.org/cpuchain.png" style="height: 30px; margin-right: 5px;">
-					CPUchain Wallet
+					<img id="coin-logo" src="logos/cpuchain.png" style="height: 30px; margin-right: 5px;">
+					<span id="coin-title">CPUchain Wallet</span>
 				</a>
 				<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
@@ -151,13 +154,22 @@
 								<li class="nav-item mr-2">
 									<a class="nav-link tab-link active" data-tab-name="open-regular" data-tab-family="open-block" href="#" tkey="open-regular"></a>
 								</li>
+								<li class="nav-item mr-2 eth-only">
+									<a class="nav-link tab-link" data-tab-name="open-browser" data-tab-family="open-block" href="#" tkey="open-browser"></a>
+								</li>
+								<li class="nav-item mr-2">
+									<a class="nav-link tab-link" data-tab-name="open-view" data-tab-family="open-block" href="#" tkey="open-view"></a>
+								</li>
+								<li class="nav-item mr-2">
+									<a class="nav-link tab-link" data-tab-name="open-mnemonic" data-tab-family="open-block" href="#" tkey="open-mnemonic"></a>
+								</li>
 								<li class="nav-item">
 									<a class="nav-link tab-link" data-tab-name="open-key" data-tab-family="open-block" href="#" tkey="open-key"></a>
 								</li>
 							</ul>
 						</div>
 						<div class="card-body">
-							<form id="open-regular-form" class="open-form tab-item" data-tab="open-regular">
+							<form id="open-regular-form" class="open-form tab-item mt-2" data-tab="open-regular">
 								<div class="input-group pb-2">
 									<input id="open-email" name="open-email" class="form-control" type="text" tkey="email-address">
 								</div>
@@ -165,21 +177,76 @@
 									<input id="open-password" name="open-password" class="form-control" type="password" tkey="password">
 									<input id="open-password-confirm" name="open-password-confirm" class="form-control" type="password" tkey="password-confirm">
 									<div class="input-group-append">
+										<select class="custom-select address-type-select form-control btc-only">
+											<option>taproot</option>
+											<option>bech32</option>
+											<option>segwit</option>
+											<option>legacy</option>
+										</select>
 										<button class="btn btn-outline-dark b-width" type="submit" id="open-regular-wallet" tkey="open"></button>
 									</div>
 								</div>
 							</form>
-							<form id="open-key-form" class="open-form tab-item d-none" data-tab="open-key">
+							<form id="open-browser-form" class="open-form tab-item mt-2 d-none" data-tab="open-browser">
+								<button class="btn btn-outline-dark btn-block" type="submit" id="open-browser-wallet" tkey="open"></button>
+							</form>
+							<form id="open-view-form" class="open-form tab-item mt-2 d-none" data-tab="open-view">
 								<div class="input-group">
+									<input id="view-only-address" name="view-only-address" class="form-control" type="text" tkey="view-key">
+									<div class="input-group-append">
+										<select class="custom-select address-type-select form-control btc-only">
+											<option>taproot</option>
+											<option>bech32</option>
+											<option>segwit</option>
+											<option>legacy</option>
+										</select>
+										<button class="btn btn-outline-dark b-width" type="submit" id="open-view-wallet" tkey="open"></button>
+									</div>
+								</div>
+							</form>
+							<form id="open-mnemonic-form" class="open-form tab-item mt-2 d-none" data-tab="open-mnemonic">
+								<div class="input-group pb-2">
+									<input id="mnemonic" name="mnemonic" class="form-control" type="text" tkey="mnemonic-key">
+								</div>
+								<div class="input-group">
+									<input id="mnemonic-index" name="mnemonic-index" class="form-control" type="number" tkey="mnemonic-index" value="0">
+									<div class="input-group-append">
+										<select class="custom-select address-type-select form-control btc-only">
+											<option>taproot</option>
+											<option>bech32</option>
+											<option>segwit</option>
+											<option>legacy</option>
+										</select>
+										<button class="btn btn-outline-dark b-width" type="submit" id="open-mnemonic-wallet" tkey="open"></button>
+									</div>
+								</div>
+							</form>
+							<form id="open-key-form" class="open-form tab-item d-none" data-tab="open-key">
+								<div class="input-group pb-2">
 									<input id="passphrase" name="passphrase" class="form-control" type="password" tkey="wif-key">
 									<div class="input-group-append">
-										<button class="btn btn-outline-dark b-width" type="submit" id="open-key-wallet" tkey="open"></button>
+										<select class="custom-select address-type-select form-control btc-only">
+											<option>taproot</option>
+											<option>bech32</option>
+											<option>segwit</option>
+											<option>legacy</option>
+										</select>
+										<button class="btn btn-outline-dark b-width" type="submit" tkey="open"></button>
 									</div>
 								</div>
 							</form>
 						</div>
 						<div class="card-footer">
 							<div class="footer-item tab-item" data-tab="open-regular" tkey="open-reminder">
+							</div>
+							<div class="footer-item tab-item d-none" data-tab="open-browser">
+								<span tkey="generate-question"></span> <span tkey="install-wallet"></span>
+							</div>
+							<div class="footer-item tab-item d-none" data-tab="open-view">
+								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
+							</div>
+							<div class="footer-item tab-item d-none" data-tab="open-mnemonic">
+								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-key">
 								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
@@ -194,11 +261,17 @@
 								<li class="nav-item mr-2">
 									<a class="nav-link tab-link active" data-tab-name="wallet-balance" data-tab-family="wallet-block" href="#" tkey="wallet"></a>
 								</li>
+								<li class="nav-item mr-2 eth-only">
+									<a class="nav-link tab-link" data-tab-name="wallet-tokens" data-tab-family="wallet-block" href="#" tkey="tokens"></a>
+								</li>
 								<li class="nav-item mr-2">
 									<a class="nav-link tab-link" data-tab-name="wallet-send" data-tab-family="wallet-block" href="#" tkey="send"></a>
 								</li>
 								<li class="nav-item mr-2">
-									<a id="history-link" class="nav-link" target="_blank" href="https://explorer.cpuchain.org/#/address/" tkey="history"></a>
+									<a class="nav-link tab-link" data-tab-name="wallet-sign" data-tab-family="wallet-block" href="#" tkey="sign"></a>
+								</li>
+								<li class="nav-item mr-2">
+									<a id="history-link" class="nav-link" target="_blank" rel="noreferrer" href="#" tkey="history"></a>
 								</li>
 								<li class="nav-item">
 									<a class="nav-link tab-link" data-tab-name="wallet-keys" data-tab-family="wallet-block" href="#" tkey="keys"></a>
@@ -214,7 +287,7 @@
 										<span class="text-monospace amount"></span>
 										<span class="ticker" tkey="loading"></span>
 									</div>
-									<div class="coinbase-balance mb-0 pb-0 c-pointer">
+									<div class="coinbase-balance mb-0 pb-0 c-pointer btc-only">
 										<span> ( Coinbase: </span>
 										<span class="amount"></span>
 										<span class="ticker" tkey="loading"></span>
@@ -231,12 +304,21 @@
 											<span class="amount"></span>
 											<span class="ticker" tkey="loading"></span>
 										</b>
-										<b class="coinbase-balance balance-small c-pointer">
+										<b class="coinbase-balance balance-small c-pointer btc-only">
 											<span> ( Coinbase: </span>
 											<span class="amount"></span>
 											<span class="ticker" tkey="loading"></span>
 											<span> )</span>
 										</b>
+									</span>
+
+									<span>
+										(
+										<span tkey="current-fees"></span>
+										<b class="wallet-balance balance-small c-pointer">
+											<span class="fee-rate"></span>
+										</b>
+										)
 									</span>
 
 									<div class="float-md-right">
@@ -248,6 +330,10 @@
 											<span tkey="reset"></span>
 											<span class="fa-solid fa-rotate-right"></span>
 										</a>
+										<a href="#" id="send-consolidate" class="text-dark btc-only">
+											<span tkey="consolidate"></span>
+											<span class="fa-solid fa-cart-plus"></span>
+										</a>
 									</div>
 								</div>
 								
@@ -255,7 +341,7 @@
 									<div class="input-group send-outputs-item mb-2">
 										<input name="send-address" class="form-control" type="text" value="" tkey="enter-address">
 										<input name="send-amount" class="form-control" type="text" value="" tkey="amount">
-										<div class="input-group-append">
+										<div class="input-group-append btc-only">
 											<button id="add-output" class="btn btn-outline-dark">
 												<span class="fa-solid fa-circle-plus"></span>
 											</button>
@@ -263,8 +349,15 @@
 									</div>
 								</div>
 
+								<div id="send-token-outputs">
+									<div class="input-group send-outputs-item mb-2 eth-only">
+										<input name="send-address" class="form-control" type="text" value="" tkey="enter-token-address">
+										<input name="send-amount" class="form-control" type="text" value="" tkey="token-amount">
+									</div>
+								</div>
+
 								<div class="input-group">
-									<input id="op-return-data" class="form-control" placeholder="(Optional) OP_RETURN data" type="text" value="">
+									<input id="optional-data" class="form-control" type="text" value="" tkey="optional-data">
 									<div class="input-group-append">
 										<button class="btn btn-outline-dark b-width" type="submit" id="send-tx" tkey="send"></button>
 									</div>
@@ -273,6 +366,20 @@
 							
 							<div class="tab-item d-none" data-tab="wallet-keys">
 								<div id="wallet-keys">
+									<div id="wallet-keys-mnemonic">
+										<label tkey="mnemonic"></label>
+										<div class="input-group pb-2">
+											<input class="form-control" readonly type="text">
+										</div>
+									</div>
+
+									<div id="wallet-keys-address">
+										<label tkey="address"></label>
+										<div class="input-group pb-2">
+											<input class="form-control" readonly type="text">
+										</div>
+									</div>
+
 									<div id="wallet-keys-pubkey">
 										<label tkey="public-key"></label>
 										<div class="input-group pb-2">
@@ -292,12 +399,33 @@
 										</div>
 									</div>
 
-									<div id="wallet-keys-script">
-										<label>Redeem Script</label>
+									<div id="wallet-keys-script" class="btc-only">
+										<label tkey="redeem-script"></label>
 										<div class="input-group pb-2">
 											<input class="form-control" readonly type="text">
 										</div>
 									</div>
+								</div>
+							</div>
+
+							<div class="tab-item d-none" data-tab="wallet-sign">
+								<div id="wallet-sign">
+									<textarea class="form-control pb-2 mb-2" id="wallet-sign-input" rows="6" tkey="enter-serialized"></textarea>
+									<button id="sign-tx" type="button" class="btn btn-primary btn-block pb-2" tkey="send"></button>
+								</div>
+							</div>
+
+							<div class="tab-item d-none" data-tab="wallet-tokens">
+								<div id="wallet-tokens">
+									<table id="tokens-table" class="table table-bordered">
+										<thead>
+											<tr>
+												<th>Token</th>
+												<th>Contract Address</th>
+												<th>Balance</th>
+											</tr>
+										</thead>
+									</table>
 								</div>
 							</div>
 						</div>
@@ -318,6 +446,13 @@
 					</div>
 					<div class="card-body">
 						<div id="create-keys">
+							<div id="create-keys-mnemonic">
+								<label tkey="mnemonic"></label>
+								<div class="input-group pb-2">
+									<input class="form-control" readonly type="text">
+								</div>
+							</div>
+
 							<div id="create-keys-address">
 								<label tkey="address"></label>
 								<div class="input-group pb-2">
@@ -336,9 +471,9 @@
 								<label tkey="private-key"></label>
 								<div class="input-group pb-2">
 									<div class="input-group">
-										<input class="form-control keys-privkey privkey" readonly data-original-title="" title="" type="password">
+										<input class="form-control keys-privkey privkey" readonly data-original-title="" title="" type="text">
 										<span class="input-group-append">
-											<button class="btn btn-outline-dark b-width toggle-priv-key" type="button" tkey="show"></button>
+											<button class="btn btn-outline-dark b-width toggle-priv-key" type="button" tkey="hide"></button>
 										</span>
 									</div>
 								</div>
@@ -377,28 +512,30 @@
 						<b tkey="wallet-settings"></b>
 					</div>
 					<div class="card-body">
-						<div id="address-type-select">
-							<label tkey="address-type"></label>
-							<div class="input-group pb-2">
-								<select class="custom-select">
-									<option>taproot</option>
-									<option>bech32</option>
-									<option>segwit</option>
-									<option>legacy</option>
-								</select>
-							</div>
-						</div>
 						<div id="wallet-backend">
 							<label tkey="wallet-backend"></label>
 							<div class="input-group pb-2">
-								<input class="form-control" type="text" tkey="wallet-api">
+								<select class="custom-select" id="wallet-backend-selected">
+								</select>
 								<span class="input-group-append">
 									<button class="btn btn-outline-dark b-width" type="button" tkey="update"></button>
 								</span>
 							</div>
 						</div>
+						<div id="wallet-custom-backend">
+							<label tkey="wallet-custom-backend"></label>
+							<div class="input-group pb-2">
+								<input class="form-control" type="text" tkey="wallet-api">
+							</div>
+						</div>
 						<div id="wallet-language-select">
 							<label tkey="wallet-language"></label>
+							<div class="input-group pb-2">
+								<select class="custom-select"></select>
+							</div>
+						</div>
+						<div id="wallet-fee-select">
+							<label tkey="wallet-fee-multiplier"></label>
 							<div class="input-group">
 								<select class="custom-select"></select>
 							</div>
@@ -412,7 +549,7 @@
 		</div>
 
 		<div id="send-modal" class="modal" tabindex="-1" role="dialog">
-			<div class="modal-dialog modal-md" role="document">
+			<div class="modal-dialog modal-lg" role="document">
 				<div class="modal-content">
 					<div class="modal-header">
 						<h5 id="send-title" class="modal-title"></h5>
@@ -422,17 +559,20 @@
 					</div>
 					<div class="modal-body">
 						<div id="confirm-screen">
+							<div id="tx-table" class="mobile-hide"></div>
 							<span tkey="send-warning"></span> <strong id="confirm-amount"></strong>. <span tkey="send-warning-reverse"></span>
 						</div>
-						<div id="status-screen" class="break-lines d-none">
+						<div id="status-screen" class="break-lines">
 							<span></span>
 							<div class="extra-info"></div>
 						</div>
 					</div>
-					<div class="modal-footer">
-						<button id="send-cancel" type="button" class="btn btn-block mr-auto btn-dark" data-dismiss="modal" tkey="cancel"></button>
-						<button id="send-confirm" type="button" class="btn btn-block mt-0 mr-auto btn-primary" tkey="send-it"></button>
-						<button id="send-close-footer" type="button" class="btn btn-block mt-0 mr-auto btn-dark d-none disabled" data-dismiss="modal" tkey="close"></button>
+					<div class="modal-footer d-flex">
+						<button id="send-cancel" type="button" class="btn btn-dark flex-fill" data-dismiss="modal" tkey="cancel"></button>
+						<button id="send-create" type="button" class="btn btn-outline-dark flex-fill mobile-hide" tkey="create-it"></button>
+						<button id="send-sign" type="button" class="btn btn-outline-dark flex-fill mobile-hide" tkey="sign-it"></button>
+						<button id="send-confirm" type="button" class="btn btn-primary flex-fill" tkey="send-it"></button>
+						<button id="send-close-footer" type="button" class="btn btn-block mt-0 mr-auto btn-dark" data-dismiss="modal" tkey="close"></button>
 					</div>
 				</div>
 			</div>
@@ -466,15 +606,26 @@
 		<!-- Footer :3 -->
 		<footer class="mb-3">
 			<div class="container text-center">
-				Powered by <a target="_blank" href="https://blockbook.cpuchain.org">Blockbook API</a> |
-				  <a target="_blank" href="https://github.com/cpuchain/cpuchain-wallet">Frontend Source Code</a>
+				Made with <span class="fa-solid fa-heart text-danger"></span> by <a target="_blank" href="https://github.com/cpuchain/cpuchain-wallet">CPUchain Community</a>
 			</div>
 		</footer>
 
+		<script src="tokens.js"></script>
+
 		<!-- All magic is here :D -->
 		<script>
-			const { Buffer, ECPair } = bitcoin
-			const TX_CHUNK_SIZE = 10
+			// todo: replace bitcoinjs with @scure/btc-signer which provides similar interface with bitcoinjs but supports bigint
+			// so that we could sign transactions with large amount of coins like Dogecoin
+			const { coininfo, bip32, bip39, Buffer, ECPair } = bitcoin;
+			const TX_CHUNK_SIZE = 10;
+			const NETWORK_ORDER = ['CPU', 'ETH'];
+			const MEMPOOL_INSTANCES = ['mempool', 'litecoinspace'];
+
+			BigInt.prototype["toJSON"] = function () {
+				return this.toString();
+			};
+
+			const ercInterface = new ethers.Interface(ERC20ABI);
 
 			// Config
 			let stream = undefined
@@ -484,8 +635,11 @@
 				CPU: {
 					uri: 'cpuchain:',
 					title: 'CPUchain Wallet',
-					name: 'CPUchain',
-					api: 'https://blockbook.cpuchain.org/api/v2',
+					name: 'CPUchain (CPU)',
+					logo: 'cpuchain.png',
+					nodes: [
+						'https://blockbook.cpuchain.org/api/v2',
+					],
 					ticker: 'CPU',
 					decimals: 8,
 					fee: 0.00001,
@@ -499,15 +653,221 @@
 						bech32: 'cpu',
 						pubKeyHash: 0x1C,
 						scriptHash: 0x1E,
-						wif: 0x80
+						wif: 0x80,
+						versions: {
+							bip44: 363
+						}
 					}
+				},
+				BTC: {
+					uri: 'bitcoin:',
+					title: 'Bitcoin Wallet',
+					name: 'Bitcoin (BTC)',
+					logo: 'bitcoin.png',
+					nodes: [
+						'https://mempool.space/api',
+						'https://mempool.emzy.de/api',
+					],
+					ticker: 'BTC',
+					decimals: 8,
+					fee: 0.00001,
+					explorer: 'https://mempool.space',
+					network: {
+						...bitcoin.networks.bitcoin,
+						versions: {
+							bip44: 363
+						}
+					}
+				},
+				LTC: {
+					uri: 'litecoin:',
+					title: 'Litecoin Wallet',
+					name: 'Litecoin (LTC)',
+					logo: 'litecoin.png',
+					nodes: [
+						'https://litecoinspace.org/api',
+					],
+					ticker: 'LTC',
+					decimals: 8,
+					fee: 0.00001,
+					explorer: 'https://litecoinspace.org',
+					network: coininfo('LTC').toBitcoinJS()
+				},
+				ETH: {
+					uri: 'ethereum:',
+					title: 'Ethereum Wallet',
+					name: 'Ethereum (ETH)',
+					logo: 'ethereum.png',
+					chainId: 1,
+					nodes: [
+						'https://rpc.mevblocker.io',
+						'https://api.securerpc.com/v1',
+						'https://1rpc.io/eth',
+						'https://eth.merkle.io',
+						'https://eth.drpc.org',
+						'https://eth.nodeconnect.org',
+						'https://api.zmok.io/mainnet/oaen6dy8ff6hju9k',
+						'https://eth.rpc.blxrbdn.com',
+						'https://rpc.ankr.com/eth',
+						'https://eth.public-rpc.com',
+						'https://eth-mainnet.nodereal.io/v1/1659dfb40aa24bbb8153a677b98064d7',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://etherscan.io',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '50',
+						maxPriorityFeePerGas: '0.001'
+					},
+				},
+				ARB: {
+					uri: 'ethereum:',
+					title: 'Arbitrum Wallet',
+					name: 'Arbitrum One (ETH)',
+					logo: 'ethereum.png',
+					chainId: 42161,
+					nodes: [
+						'https://arb1.arbitrum.io/rpc',
+						'https://arbitrum.llamarpc.com',
+						'https://1rpc.io/arb',
+						'https://arbitrum-one.public.blastapi.io',
+						'https://arbitrum-one.publicnode.com',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://arbiscan.io',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '0.2',
+						maxPriorityFeePerGas: '0'
+					},
+				},
+				OP: {
+					uri: 'ethereum:',
+					title: 'Optimism Wallet',
+					name: 'Optimism (ETH)',
+					logo: 'ethereum.png',
+					chainId: 10,
+					nodes: [
+						'https://mainnet.optimism.io',
+						'https://optimism-mainnet.public.blastapi.io',
+						'https://1rpc.io/op',
+						'https://optimism.llamarpc.com',
+						'https://optimism.publicnode.com',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://optimistic.etherscan.io',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '0.02',
+						maxPriorityFeePerGas: '0.001'
+					},
+				},
+				BNB: {
+					uri: 'ethereum:',
+					title: 'BNB Wallet',
+					name: 'BNB Chain (BNB)',
+					logo: 'bnb.png',
+					chainId: 56,
+					nodes: [
+						'https://binance.nodereal.io',
+						'https://binance.llamarpc.com',
+						'https://bsc-mainnet.nodereal.io/v1/64a9df0874fb4a93b9d0a3849de012d3',
+						'https://1rpc.io/bnb',
+						'https://bsc-mainnet.public.blastapi.io',
+						'https://bnb.api.onfinality.io/public',
+						'https://bsc.rpc.blxrbdn.com',
+						'https://rpc.ankr.com/bsc',
+						'https://bscrpc.com',
+						'https://bsc-dataseed.bnbchain.org',
+						'https://bsc-dataseed1.defibit.io',
+						'https://bsc-dataseed1.ninicoin.io',
+						'https://bsc-dataseed1.bnbchain.org',
+					],
+					ticker: 'BNB',
+					decimals: 18,
+					explorer: 'https://bscscan.com',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						gasPrice: '3'
+					},
+				},
+				POLY: {
+					uri: 'ethereum:',
+					title: 'Polygon Wallet',
+					name: 'Polygon Mainnet (MATIC)',
+					logo: 'polygon.png',
+					chainId: 137,
+					nodes: [
+						'https://polygon-rpc.com',
+						'https://1rpc.io/matic',
+						'https://polygon.api.onfinality.io/public',
+						'https://polygon.llamarpc.com',
+					],
+					ticker: 'MATIC',
+					decimals: 18,
+					explorer: 'https://polygonscan.com',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '120',
+						maxPriorityFeePerGas: '32'
+					},
+				},
+				AVAX: {
+					uri: 'ethereum:',
+					title: 'Avalanche Wallet',
+					name: 'Avalanche (AVAX)',
+					logo: 'avalanche.png',
+					chainId: 43114,
+					nodes: [
+						'https://avalanche.public-rpc.com',
+						'https://avalanche-c-chain.publicnode.com',
+						'https://1rpc.io/avax/c',
+						'https://avalanche.drpc.org',
+					],
+					ticker: 'AVAX',
+					decimals: 18,
+					explorer: 'https://avascan.info',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '50',
+						maxPriorityFeePerGas: '0'
+					},
+				},
+				XDAI: {
+					uri: 'ethereum:',
+					title: 'Gnosis Wallet',
+					name: 'Gnosis Chain (XDAI)',
+					logo: 'gnosis.png',
+					chainId: 100,
+					nodes: [
+						'https://rpc.gnosischain.com',
+						'https://gnosis-mainnet.public.blastapi.io',
+						'https://1rpc.io/gnosis',
+						'https://gnosis.api.onfinality.io/public',
+						'https://gnosis.publicnode.com',
+					],
+					ticker: 'XDAI',
+					decimals: 18,
+					explorer: 'https://gnosisscan.io',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '3',
+						maxPriorityFeePerGas: '1.5'
+					},
 				},
 				TCPU: {
 					uri: 'cpuchain:',
 					title: 'CPUchain Testnet Wallet',
-					name: 'CPUchain Testnet',
-					api: 'https://testnet-blockbook.cpuchain.org/api/v2',
+					name: 'CPUchain Testnet (CPU)',
+					logo: 'cpuchain.png',
+					nodes: [
+						'https://testnet-blockbook.cpuchain.org/api/v2'
+					],
 					ticker: 'CPU',
+					slip44: 363,
 					decimals: 8,
 					fee: 0.00001,
 					explorer: 'https://explorer.cpuchain.org/testnet/#',
@@ -522,152 +882,147 @@
 						scriptHash: 0xC4,
 						wif: 0xEF
 					}
-				}
+				},
+				TBTC: {
+					uri: 'bitcoin:',
+					title: 'Bitcoin Testnet Wallet',
+					name: 'Bitcoin Testnet3 (BTC)',
+					logo: 'bitcoin.png',
+					nodes: [
+						'https://mempool.space/testnet/api',
+						'https://mempool.emzy.de/testnet/api',
+					],
+					ticker: 'BTC',
+					decimals: 8,
+					fee: 0.00001,
+					explorer: 'https://mempool.space/testnet',
+					network: {
+						...bitcoin.networks.testnet,
+						versions: {
+							bip44: 1
+						}
+					}
+				},
+				SEP: {
+					uri: 'ethereum:',
+					title: 'Sepolia Testnet Wallet',
+					name: 'Sepolia Testnet (ETH)',
+					logo: 'ethereum.png',
+					chainId: 11155111,
+					nodes: [
+						'https://rpc.sepolia.org',
+						'https://rpc2.sepolia.org',
+						'https://1rpc.io/sepolia',
+						'https://rpc.sepolia.ethpandaops.io',
+						'https://ethereum-sepolia.publicnode.com',
+						'https://rpc-sepolia.rockx.com',
+						'https://eth-sepolia.api.onfinality.io/public',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://sepolia.etherscan.io',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '1',
+						maxPriorityFeePerGas: '0.001'
+					},
+				},
+				HOLE: {
+					uri: 'ethereum:',
+					title: 'Holesky Testnet Wallet',
+					name: 'Holesky Testnet (ETH)',
+					logo: 'ethereum.png',
+					chainId: 17000,
+					nodes: [
+						'https://ethereum-holesky.publicnode.com',
+						'https://rpc.holesky.ethpandaops.io',
+						'https://ethereum-holesky.blockpi.network/v1/rpc/public',
+						'https://holesky-rpc.nocturnode.tech',
+						'https://1rpc.io/holesky',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://holesky.etherscan.io',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '1',
+						maxPriorityFeePerGas: '0.001'
+					},
+				},
+				CUSTOM: {
+					uri: 'ethereum:',
+					title: 'Custom Network Wallet',
+					name: 'Custom Network (ETH)',
+					logo: 'ethereum.png',
+					chainId: 31337,
+					nodes: [
+						'http://localhost:8545',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://etherscan.io',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '1',
+						maxPriorityFeePerGas: '0.001'
+					},
+				},
 			}
 
-			let globalData = {
+			const cookieValue = {};
+
+			const globalData = {
 				balance: 0,
 				coinbase: 0,
 				keys: null,
 				address: null,
+				provider: null,
+				browserProvider: null,
+				signer: null,
+				Multicall: null,
+				blockNumber: null,
+				chainId: null,
 				rfee: getConfig()['fee'],
-				utxos: [],
-				tx: {
-					amount: 0,
-					outputs: [],
-					fee: 0
+				fees: {
+					gasPrice: null,
+					maxFeePerGas: null,
+					maxPriorityFeePerGas: null,
 				},
+				utxos: [],
+				tx: null,
+				walletInterval: null,
+				tokenTable: null,
 				resetTx: function() {
-					this.tx = {
-						amount: 0,
-						outputs: [],
-						fee: 0
-					}
+					this.tx = null;
 				},
 				clear: function() {
-					this.keys = null
-					this.address = null
-					this.balance = 0
-					this.coinbase = 0
-					this.utxos = []
-					this.resetTx()
-				}
-			}
-
-			function sleep(ms = 0) {
-				return new Promise((resolve) => setTimeout(resolve, ms))
-			}
-
-			function chunk(arr = [], size = 0) {
-				return [...Array(Math.ceil(arr.length / size))].map((v, i) => arr.slice(size * i, size + size * i))
-			}
-
-			function checkHex(hexStr) {
-				try {
-					if (hexStr.slice(0, 2) !== '0x') {
-						return false
+					this.balance = 0;
+					this.coinbase = 0;
+					this.keys = null;
+					this.address = null;
+					this.browserProvider = null;
+					this.signer = null;
+					this.utxos = [];
+					if (this.walletInterval) {
+						clearInterval(this.walletInterval);
+						this.walletInterval = null;
 					}
-
-					BigInt(hexStr)
-					return true
-				} catch {
-					return false
-				}
-			}
-
-			function getScriptType(script) {
-				if (script[0] === bitcoin.opcodes.OP_1 && script[1] === 32) {
-					return 'taproot'
-				}
-
-				if (script[0] == bitcoin.opcodes.OP_0 && script[1] == 20) {
-					return 'bech32'
-				}
-
-				if (script[0] == bitcoin.opcodes.OP_HASH160 && script[1] == 20) {
-					return 'segwit'
-				}
-
-				if (
-					script[0] == bitcoin.opcodes.OP_DUP &&
-					script[1] == bitcoin.opcodes.OP_HASH160 &&
-					script[2] == 20
-				) {
-					return 'legacy'
-				}
-
-				return 'unknown'
-			}
-
-			function getBytes(type, isInput = true) {
-				switch (type) {
-					case 'taproot':
-						return isInput ? 58 : 43;
-					case 'bech32':
-						return isInput ? 68 : 31;
-					case 'segwit':
-						return isInput ? 91 : 32;
-					case 'legacy':
-						return isInput ? 148 : 34;
-					default:
-						return isInput ? 392 : 34;
-				}
-			}
-
-			function getAddressScript(address) {
-				return bitcoin.address.toOutputScript(address, getConfig()['network'])
-			}
-
-			function validateAddress(address) {
-				try {
-					getAddressScript(address)
-					return true
-				} catch {
-					return false
-				}
-			}
-
-			function getAddress(pubkey) {
-				const network = getConfig()['network']
-				const addrType = getAddressType()
-
-				if (addrType === 'taproot') {
-					const internalPubkey = pubkey.slice(1, 33)
-					return bitcoin.payments.p2tr({
-						internalPubkey,
-						network
-					}).address
-				} else if (addrType === 'bech32') {
-					return bitcoin.payments.p2wpkh({
-						pubkey,
-						network
-					}).address
-				} else if (addrType === 'segwit') {
-					const redeem = bitcoin.payments.p2wpkh({
-						pubkey,
-						network
-					})
-					return bitcoin.payments.p2sh({
-						redeem,
-						network
-					}).address
-				} else if (addrType === 'legacy') {
-					return bitcoin.payments.p2pkh({
-						pubkey,
-						network
-					}).address
-				}
-			}
-
-			// Convert satoshis to readable amount
-			function amountFormat(amount, invert = false) {
-				const decimals = getConfig()['decimals']
-				if (!invert) {
-					return Number(bigDecimal.divide(amount, 10 ** decimals, decimals))
-				} else {
-					// Fixes 0.00013 * 1000 => 0.12999999999999998
-					// return Math.floor(amount * 10 ** decimals)
-					return Math.floor(Number(bigDecimal.multiply(amount, 10 ** decimals)))
+					if (this.tokenTable) {
+						this.tokenTable.clear().draw();
+					}
+					this.resetTx();
+				},
+				clearNetwork: function() {
+					this.provider = null;
+					this.Multicall = null;
+					this.blockNumber = null;
+					this.chainId = null;
+					this.rfee = getConfig()['fee'];
+					this.fees = {
+						gasPrice: null,
+						maxFeePerGas: null,
+						maxPriorityFeePerGas: null,
+					}
 				}
 			}
 
@@ -689,12 +1044,17 @@
 					},
 					'error': {
 						'bad-utxo': getText('bad-utxo'),
+						'wallet-open-failed': getText('wallet-open-failed'),
 						'balance-load-failed': getText('balance-load-failed'),
 						'not-enough-funds': getText('not-enough-funds'),
+						'unsupported-wallet': getText('unsupported-wallet'),
+						'not-valid-public-key': getText('not-valid-public-key'),
 						'not-valid-address': getText('not-valid-address'),
+						'not-valid-token-address': getText('not-valid-token-address'),
 						'not-valid-amount': getText('not-valid-amount'),
 						'not-valid-fee': getText('not-valid-fee'),
 						'bad-priv-key': getText('bad-priv-key'),
+						'bad-mnemonic': getText('bad-mnemonic'),
 						'not-enough-utxo': getText('not-enough-utxo'),
 						'broadcast-failed': getText('broadcast-failed'),
 						'pass-not-match': getText('pass-not-match'),
@@ -705,6 +1065,7 @@
 					'tx': {
 						'loading-utxo': getText('loading-utxo'),
 						'generating': getText('transaction-creation'),
+						'sending': getText('transaction-sending'),
 						'success': getText('transaction-broadcasted'),
 					},
 					'title': {
@@ -719,6 +1080,39 @@
 						}
 					}
 				}
+			}
+
+			function initKeys() {
+				$("[tkey]").each(function() {
+					const network = getConfig();
+
+					let text = $(this).attr('tkey');
+
+					switch (text) {
+						case 'view-key':
+							if (network.isBtc) {
+								text = 'created-public-key';
+								break;
+							} else if (network.isEth) {
+								text = 'address-key';
+								break;
+							}
+						case 'optional-data':
+							if (network.isBtc) {
+								text = 'return-data';
+								break;
+							} else if (network.isEth) {
+								text = 'input-data';
+								break;
+							}
+					}
+					
+					if (['INPUT', 'TEXTAREA'].indexOf($(this).prop('tagName')) >= 0) {
+						$(this).attr('placeholder', getText(text))
+					} else {
+						$(this).html(getText(text))
+					}
+				});
 			}
 
 			function initLang() {
@@ -744,17 +1138,30 @@
 				}
 
 				$('#wallet-language-select select').val(language)
-				$("[tkey]").each(function() {
-					if (['INPUT', 'TEXTAREA'].indexOf($(this).prop('tagName')) >= 0) {
-						$(this).attr('placeholder', getText($(this).attr('tkey')))
-					} else {
-						$(this).html(getText($(this).attr('tkey')))
-					}
-				})
+				initKeys();
 
 				messages = initMessages()
 				setTitle(getText('wallet-settings'))
 				return language
+			}
+
+			function initFeeMultiplier() {
+				const multiplier = getFeeMultiplier();
+				let selectedKey;
+
+				$('#wallet-fee-select select').empty()
+				for (key in feeMultipliers) {					
+					if (multiplier === feeMultipliers[key]) {
+						selectedKey = key;
+					}
+
+					$('#wallet-fee-select select').append($('<option>', {
+						'value': key,
+						'text': key
+					}))
+				}
+
+				$('#wallet-fee-select select').val(selectedKey);
 			}
 
 			// Get current wallet language translation token
@@ -772,21 +1179,29 @@
 			function getConfig() {
 				let network = readCookie('network')
 				if (!network || !networkConfigs[network]) {
-					setCookie('network', Object.keys(networkConfigs)[0], 60)
+					setCookie('network', NETWORK_ORDER[0], 60)
 					network = readCookie('network')
 				}
 
-				return networkConfigs[network]
+				const networkConfig = networkConfigs[network];
+
+				if (networkConfig.network) {
+					networkConfig.isBtc = true;
+				} else if (networkConfig.chainId) {
+					networkConfig.isEth = true;
+				}
+
+				return networkConfig
 			}
 
 			// Switch network
 			function switchConfig(network, page = '') {
 				network = network.toUpperCase()
 				if (networkConfigs[network] && networkConfigs[network] !== getConfig()) {
+					switchBackend(networkConfigs[network]['nodes'][0])
 					setCookie('network', network, 60)
-					closeWallet()
 					displayNetworks()
-					switchBackend(networkConfigs[network]['api'])
+					displayBackends()
 				}
 
 				switchPage(page)
@@ -801,6 +1216,64 @@
 				for (const key in networkConfigs) {
 					$('#network-list .dropdown-menu').append(`<a class="dropdown-item ${networkConfigs[key]['name'] == network['name'] ? 'active' : ''}" href="#/network/${key}">${networkConfigs[key]['name']}</a>`)
 				}
+
+				if (network.isBtc) {
+					$('.btc-only').show();
+					$('.eth-only').hide();
+				} else if (network.isEth) {
+					$('.btc-only').hide();
+					$('.eth-only').show();
+				}
+
+				$('#coin-logo').attr('src', embedded[network.logo]);
+				$('#coin-favicon').attr('href', embedded[network.logo]);
+				$('#coin-title').text(network.title);
+
+				initKeys();
+			}
+
+			function displayBackends() {
+				const network = getConfig()
+				const currentBackend = getBackend()
+				$('.wallet-backend-list').remove()
+				network.nodes.forEach(r => {
+					$('#wallet-backend-selected').append(`
+							<option val="${r}" class="wallet-backend-list" ${r === currentBackend ? 'selected' : ''}>${r}</option>
+					`)
+				})
+				$('#wallet-backend-selected').append(`
+						<option val="Offline" class="wallet-backend-list" ${'Offline (For signing)' === currentBackend ? 'selected' : ''}>Offline (For signing)</option>
+				`)
+				$('#wallet-backend-selected').append(`
+						<option val="custom-backend" class="wallet-backend-list">Custom Backend</option>
+				`)
+			}
+
+			const electrumKeys = {
+				taproot: 'p2tr',
+				bech32: 'p2wpkh',
+				segwit: 'p2wpkh-p2sh',
+				legacy: 'p2pkh',
+				p2tr: 'taproot',
+				p2wpkh: 'bech32',
+				'p2wpkh-p2sh': 'segwit',
+				p2pkh: 'legacy',
+			}
+
+			const feeMultipliers = {
+				fast: 2,
+				medium: 1.5,
+				slow: 1,
+			}
+
+			function getFeeMultiplier() {
+				let multiplier = readCookie('multiplier')
+				if (!multiplier || !Object.keys(feeMultipliers).includes(multiplier)) {
+					setCookie('multiplier', 'fast', 60)
+					multiplier = readCookie('multiplier')
+				}
+
+				return feeMultipliers[multiplier]
 			}
 
 			// Get current address type
@@ -818,29 +1291,37 @@
 			function switchAddressType(type) {
 				if (['taproot', 'bech32', 'segwit', 'legacy'].includes(type)) {
 					setCookie('type', type, 60)
+					$('.address-type-select').val(type);
 				}
 			}
 
 			// Get current wallet backend
 			function getBackend() {
 				let backend = readCookie('backend')
+
 				if (!backend) {
-					setCookie('backend', getConfig()['api'], 60)
+					setCookie('backend', getConfig().nodes[0], 60)
 					backend = readCookie('backend')
 				}
 
-				return backend
+				return backend;
 			}
 
 			// Switch wallet backend
 			// skip /info check for convenience
 			function switchBackend(url) {
+				globalData.clearNetwork()
+				closeWallet()
 				setCookie('backend', url, 60)
 				showMessage(messages.settings.backendSwitched(url))
 			}
 
 			// Set cookie
 			function setCookie(name, value, days) {
+				if (location.protocol === 'file:') {
+					cookieValue[name] = value;
+				}
+
 				let expires
 
 				if (days) {
@@ -855,6 +1336,10 @@
 
 			// Read cookie
 			function readCookie(name) {
+				if (location.protocol === 'file:') {
+					return cookieValue[name];
+				}
+
 				const nameEQ = encodeURIComponent(name) + '=';
 				const ca = document.cookie.split(';');
 				for (let i = 0; i < ca.length; i++) {
@@ -867,6 +1352,10 @@
 
 			function deleteCookie(name) {
 				document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+			}
+
+			function resetCookie() {
+				document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
 			}
 
 			// SPA router function
@@ -940,16 +1429,208 @@
 				document.title = `${title} | ${getConfig()['title']}`;
 			}
 
+			function sleep(ms = 0) {
+				return new Promise((resolve) => setTimeout(resolve, ms))
+			}
+
+			function chunk(arr = [], size = 0) {
+				return [...Array(Math.ceil(arr.length / size))].map((v, i) => arr.slice(size * i, size + size * i))
+			}
+
+			function checkHex(hexStr) {
+				try {
+					if (hexStr.slice(0, 2) !== '0x') {
+						return false
+					}
+
+					BigInt(hexStr)
+					return true
+				} catch {
+					return false
+				}
+			}
+
+			function getScriptType(script) {
+				if (script[0] === bitcoin.opcodes.OP_1 && script[1] === 32) {
+					return 'taproot'
+				}
+
+				if (script[0] == bitcoin.opcodes.OP_0 && script[1] == 20) {
+					return 'bech32'
+				}
+
+				if (script[0] == bitcoin.opcodes.OP_HASH160 && script[1] == 20) {
+					return 'segwit'
+				}
+
+				if (
+					script[0] == bitcoin.opcodes.OP_DUP &&
+					script[1] == bitcoin.opcodes.OP_HASH160 &&
+					script[2] == 20
+				) {
+					return 'legacy'
+				}
+
+				return 'unknown'
+			}
+
+			function getBytes(type, isInput = true) {
+				switch (type) {
+					case 'taproot':
+						return isInput ? 58 : 43;
+					case 'bech32':
+						return isInput ? 68 : 31;
+					case 'segwit':
+						return isInput ? 91 : 32;
+					case 'legacy':
+						return isInput ? 148 : 34;
+					default:
+						return isInput ? 392 : 34;
+				}
+			}
+
+			function getAddressScript(address) {
+				return bitcoin.address.toOutputScript(address, getConfig()['network'])
+			}
+
+			function validateAddress(address) {
+				try {
+					const network = getConfig();
+					
+					if (network.isBtc) {
+						getAddressScript(address);
+					} else if (network.isEth) {
+						ethers.getAddress(address);
+					}
+
+					return true
+				} catch {
+					return false
+				}
+			}
+
+			function getAddress(pubkey) {
+				const network = getConfig()['network']
+				const addrType = getAddressType()
+
+				if (addrType === 'taproot') {
+					const internalPubkey = pubkey.slice(1, 33)
+					return bitcoin.payments.p2tr({
+						internalPubkey,
+						network
+					}).address
+				} else if (addrType === 'bech32') {
+					return bitcoin.payments.p2wpkh({
+						pubkey,
+						network
+					}).address
+				} else if (addrType === 'segwit') {
+					const redeem = bitcoin.payments.p2wpkh({
+						pubkey,
+						network
+					})
+					return bitcoin.payments.p2sh({
+						redeem,
+						network
+					}).address
+				} else if (addrType === 'legacy') {
+					return bitcoin.payments.p2pkh({
+						pubkey,
+						network
+					}).address
+				}
+			}
+
+			function getDerivation() {
+				const addrType = getAddressType();
+
+				switch (addrType) {
+					// https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
+					case 'taproot':
+						return 86;
+					// https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
+					case 'bech32':
+						return 84;
+					// https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
+					case 'segwit':
+						return 49;
+					// https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
+					default:
+						return 44;
+				}
+			}
+
+			// Convert satoshis to readable amount
+			function amountFormat(amount, invert = false) {
+				const decimals = getConfig()['decimals']
+				if (!invert) {
+					return ethers.formatUnits(amount, decimals)
+				} else {
+					// Fixes 0.00013 * 1000 => 0.12999999999999998
+					// return Math.floor(amount * 10 ** decimals)
+					return Number(ethers.parseUnits(Number(amount).toFixed(decimals), decimals))
+				}
+			}
+
+			const hex = d => `0x${Number(d).toString(16)}`;
+
+			function getNetworkParams() {
+				const networkConfig = getConfig();
+
+				return [{
+					chainId: hex(networkConfig.chainId),
+					chainName: networkConfig.name,
+					nativeCurrency: {
+						name: networkConfig.name,
+						symbol: networkConfig.ticker,
+						decimals: networkConfig.decimals
+					},
+					rpcUrls: [getBackend()],
+					blockExplorerUrls: [networkConfig.explorer]
+				}];
+			}
+
+			async function switchNetwork() {
+				const networkConfig = getConfig();
+
+				try {
+					await window.ethereum.request({
+						method: 'wallet_switchEthereumChain',
+						params: [{ chainId: hex(networkConfig.chainId) }]
+					});
+				} catch (switchError) {
+					if (switchError.code === 4902) {
+						await window.ethereum.request({
+							method: 'wallet_addEthereumChain',
+							params: getNetworkParams(),
+						});
+					} else {
+						throw switchError;
+					}
+				}
+			}
+
 			// Broadcast tx
-			async function transactionBroadcast(rawtx) {
-				const resp = await fetch(`${getBackend()}/sendtx/`, {
+			async function transactionBroadcastBtc(rawtx) {
+				const backend = getBackend();
+
+				if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
+					const resp = await fetch(`${backend}/tx`, {
+						method: 'POST',
+						body: rawtx
+					});
+					
+					return resp.text();
+				}
+
+				const resp = await fetch(`${backend}/sendtx/`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
 					body: rawtx
 				})
-				
+					
 				const data = await resp.json()
 
 				if (data.error) {
@@ -959,48 +1640,98 @@
 				return data.result
 			}
 
+			async function transactionBroadcast(rawtx) {
+				const network = getConfig();
+
+				if (network.isBtc) {
+					return transactionBroadcastBtc(rawtx);
+				} else if (network.isEth) {
+					return (await globalData.provider.broadcastTransaction(rawtx)).hash;
+				}
+			}
+
+			// serialize tx
+			// from v5 https://docs.ethers.org/v5/api/utils/transactions/#utils-serializeTransaction
+			function serializeTransaction(txData) {
+				return ethers.hexlify(ethers.toUtf8Bytes(JSON.stringify(txData)));
+			}
+
+			function parseTransaction(bytesString) {
+				return JSON.parse(ethers.toUtf8String(ethers.getBytes(bytesString)));
+			}
+
 			// Estimate fee
 			async function estimateFee() {
 				try {
-					const resp = await fetch(`${getBackend()}/estimatefee/1`, {
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json'
+					const backend = getBackend();
+					let parsedFee;
+
+					if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
+						const resp = await fetch(`${getBackend()}/v1/fees/recommended`, {
+							method: 'GET'
+						});
+						
+						const data = await resp.json();
+						
+						if (data.error) {
+							throw new Error(JSON.stringify(data.error));
 						}
-					})
-					
-					const data = await resp.json()
+						
+						parsedFee = amountFormat(data.fastestFee) * 1000;
 
-					if (data.error) {
-						throw new Error(JSON.stringify(data.error))
+					} else {
+						const resp = await fetch(`${getBackend()}/estimatefee/1`, {
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json'
+							}
+						});
+						
+						const data = await resp.json();
+						
+						if (data.error) {
+							throw new Error(JSON.stringify(data.error));
+						}
+						
+						parsedFee = Number(data.result);
 					}
 
-					const parsedFee = Number(data.result)
-
-					if (parsedFee < getConfig()['fee']) {
-						return getConfig()['fee']
+					if (!parsedFee || parsedFee < getConfig()['fee']) {
+						parsedFee = getConfig()['fee'];
 					}
 
-					return parsedFee
+					return Math.floor(amountFormat(parsedFee / 1000, true) * getFeeMultiplier());
 				} catch {
-					return getConfig()['fee']
+					return Math.floor(amountFormat(getConfig()['fee'] / 1000, true) * getFeeMultiplier());
 				}
 			}
 
 			// Get address UTXO
 			// This only returns an array of txid and unspent values
 			async function getUnspent(address) {
-				const resp = await fetch(`${getBackend()}/utxo/${address}`, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				})
+				const backend = getBackend();
+				const utxos = [];
 
-				const data = await resp.json()
+				if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
+					const resp = await fetch(`${backend}/address/${address}/utxo`, {
+						method: 'GET'
+					});
+
+					utxos.push(...await resp.json());
+
+				} else {
+					const resp = await fetch(`${backend}/utxo/${address}`, {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					});
+
+					utxos.push(...await resp.json());
+				}
 
 				// Return UTXOs in an ascending order as we want to spend the oldest coins first
-				return data.sort((a, b) => {
+				return utxos.sort((a, b) => {
 					if (a.height === b.height) {
 						return a.vout - b.vout
 					}
@@ -1012,20 +1743,34 @@
 			// Since non-segwit addresses would need to input the whole tx object we ask the api full info
 			// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts#L36
 			async function getTransactions(txs = []) {
-				const results = []
+				const backend = getBackend();
+				const results = [];
 
 				for (const chunks of chunk(txs, TX_CHUNK_SIZE)) {
 					const chunkResults = await Promise.all(chunks.map(async (tx, index) => {
 						await sleep(index * 20)
 
-						const resp = await fetch(`${getBackend()}/tx/${tx}`, {
-							method: 'GET',
-							headers: {
-								'Content-Type': 'application/json'
-							}
-						})
+						if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
+							const resp = await fetch(`${getBackend()}/tx/${tx}/hex`, {
+								method: 'GET',
+							});
 
-						return resp.json()
+							const hex = await resp.text();
+
+							return {
+								txid: tx,
+								hex
+							}
+
+						} else {
+							const resp = await fetch(`${getBackend()}/tx/${tx}`, {
+								method: 'GET',
+								headers: {
+									'Content-Type': 'application/json'
+								}
+							})
+							return resp.json()
+						}
 					}))
 
 					results.push(...chunkResults)
@@ -1034,62 +1779,68 @@
 				return results
 			}
 
+			async function getProvider() {
+				const backend = getBackend();
+				const networkConfig = getConfig();
+
+				if (backend === 'Offline (For signing)') {
+					const staticNetwork = new ethers.Network('mainnet', BigInt(readCookie('network')));
+
+					const provider = new ethers.JsonRpcProvider('http://localhost:8545', staticNetwork, {
+						staticNetwork,
+					});
+
+					globalData.chainId = Number(staticNetwork.chainId);
+					globalData.provider = provider;
+					globalData.Multicall = new ethers.BaseContract(networkConfig['Multicall'], MulticallABI, provider);
+
+					const fallbackGas = networkConfig.fallbackGas;
+
+					if (fallbackGas.maxFeePerGas) {
+						globalData.fees.gasPrice = null;
+						globalData.fees.maxFeePerGas = fallbackGas.maxFeePerGas;
+						globalData.fees.maxPriorityFeePerGas = fallbackGas.maxPriorityFeePerGas;
+					} else {
+						globalData.fees.gasPrice = fallbackGas.gasPrice;
+						globalData.fees.maxFeePerGas = null;
+						globalData.fees.maxPriorityFeePerGas = null;
+					}
+
+					return { provider, staticNetwork }
+				}
+
+				const staticNetwork = await (new ethers.JsonRpcProvider(backend)).getNetwork();
+					
+				const provider = new ethers.JsonRpcProvider(backend, staticNetwork, {
+					staticNetwork,
+					pollingInterval: 10000,
+				});
+
+				globalData.chainId = Number(staticNetwork.chainId);
+				globalData.provider = provider;
+				globalData.Multicall = new ethers.BaseContract(networkConfig['Multicall'], MulticallABI, provider);
+
+				return { provider, staticNetwork }
+			}
+
 			// Show big error message at the top of the page :D 
-			function showMessage(message) {
+			function showMessage(message, hide = true) {
 				$('#error-message').html(message)
 				$('#error-message').removeClass('d-none')
-				setTimeout(function() {
-					$('#error-message').addClass('d-none')
-				}, 3400);
+				if (hide) {
+					setTimeout(function() {
+						$('#error-message').addClass('d-none')
+					}, 3400);
+				}
+			}
+
+			function hideMessage() {
+				$('#error-message').addClass('d-none')
 			}
 
 			function showQrAddress(text) {
 				$('#qr-code-addres').empty()
 				$('#qr-code-addres').qrcode(text)
-			}
-
-			/* Wallet functions */
-
-			// Refresh UTXO list and wallet balance
-			async function walletBalance() {
-				if (!globalData.address) {
-					return
-				}
-
-				$('.wallet-balance .amount').text('')
-				$('.wallet-balance .ticker').text(getText('loading'))
-				$('.coinbase-balance').hide()
-
-				try {
-					let coinbase = 0;
-					let utxoBalance = 0;
-					const utxos = (await getUnspent(globalData.address)).filter((utxo) => {
-						if (utxo.coinbase && utxo.confirmations < 100) {
-							coinbase += Number(utxo.value)
-							return false
-						}
-						utxoBalance += Number(utxo.value)
-						return true
-					})
-
-					globalData.balance = utxoBalance
-					globalData.coinbase = coinbase
-					globalData.utxos = utxos
-					$('.wallet-balance .amount').text(amountFormat(utxoBalance))
-					$('.wallet-balance .ticker').text(getConfig()['ticker'])
-
-					if (coinbase) {
-						$('.coinbase-balance .amount').text(amountFormat(coinbase))
-						$('.coinbase-balance .ticker').text(getConfig()['ticker'])
-						$('.coinbase-balance').show()
-					}
-				} catch (err) {
-					console.log(err)
-					showMessage(messages.errors['balance-load-failed'])
-					$('.wallet-balance .amount').text('0.00')
-					$('.wallet-balance .ticker').text(getConfig()['ticker'])
-					$('.coinbase-balance').hide()
-				}
 			}
 
 			// Set title
@@ -1101,72 +1852,303 @@
 				}
 			}
 
-			// Check balance
-			function checkBalanceLoop() {
-				clearTimeout(walletTimer);
-				walletTimer = setTimeout(function() {
-					if ($('.wallet-balance .ticker').text() != getText('loading')) {
-						walletBalance()
-					}
-					checkBalanceLoop()
-				}, 20000)
+			/* Wallet functions */
+			async function multicall(calls) {
+				const calldata = calls.map(call => {
+					const target = call.contact?.target || call.address;
+					const callInterface = call.contract?.interface || call.interface;
+
+					return {
+						target,
+						callData: callInterface.encodeFunctionData(call.name, call.params),
+						allowFailure: call.allowFailure ?? false,
+					};
+				});
+
+				const returnData = await globalData.Multicall.aggregate3.staticCall(calldata);
+				
+				const res = returnData.map((call, i) => {
+					const callInterface = calls[i].contract?.interface || calls[i].interface;
+					const [result, data] = call
+					const decodeResult = (result && data && data !== '0x') ? callInterface.decodeFunctionResult(calls[i].name, data) : null
+					return !decodeResult ? null : decodeResult.length === 1 ? decodeResult[0] : decodeResult
+				});
+
+				return res
 			}
 
-			// Open wallet by key
-			function openWallet(keys) {
+			/* Wallet functions */
+			async function walletBalanceBtc() {
+				let coinbase = 0;
+				let utxoBalance = 0;
+
+				const [fees, unspents] = await Promise.all([
+					estimateFee(),
+					getUnspent(globalData.address),
+				]);
+
+				const utxos = unspents.filter((utxo) => {
+					if (utxo.coinbase && utxo.confirmations < 100) {
+						coinbase += Number(utxo.value)
+						return false
+					}
+					utxoBalance += Number(utxo.value)
+					return true
+				});
+
+				globalData.rfee = fees;
+				globalData.balance = utxoBalance;
+				globalData.coinbase = coinbase;
+				globalData.utxos = utxos;
+
+				$('.fee-rate').text(`${fees} sat/vByte`);
+				$('.wallet-balance .amount').text(amountFormat(utxoBalance));
+				$('.wallet-balance .ticker').text(getConfig()['ticker']);
+
+				if (coinbase) {
+					$('.coinbase-balance .amount').text(amountFormat(coinbase));
+					$('.coinbase-balance .ticker').text(getConfig()['ticker']);
+					$('.coinbase-balance').show();
+				}
+			}
+
+			async function walletBalanceEth() {
+				const network = getConfig();
+
+				const chainTokens = tokens.filter(t => t.chainId === globalData.chainId);
+
+				const provider = globalData.provider;
+				const signer = globalData.signer;
+				const Multicall = globalData.Multicall;
+
+
+				const calls = [
+					{
+						address: Multicall.target,
+						interface: Multicall.interface,
+						name: 'getBlockNumber',
+					},
+					{
+						address: Multicall.target,
+						interface: Multicall.interface,
+						name: 'getEthBalance',
+						params: [signer.address]
+					}
+				].concat(
+					chainTokens.map(t => ({
+						address: t.address,
+						interface: ercInterface,
+						name: 'balanceOf',
+						params: [signer.address],
+						allowFailure: true,
+					}))
+				);
+
+				const results = await Promise.all([
+					provider.getFeeData(),
+					...chunk(calls, 1200).map(multicall)
+				]);
+
+				const feeData = results[0];
+				const [blockNumber, ethBalance] = results[1];
+
+				// update network
+				globalData.blockNumber = blockNumber;
+				
+				let { gasPrice, maxFeePerGas, maxPriorityFeePerGas } = feeData;
+				
+				if (maxFeePerGas) {
+					globalData.fees.gasPrice = null;
+					globalData.fees.maxFeePerGas = BigInt(Math.floor(Number(maxFeePerGas) * getFeeMultiplier() / 2));
+					globalData.fees.maxPriorityFeePerGas = maxPriorityFeePerGas;
+				} else {
+					globalData.fees.gasPrice = gasPrice;
+					globalData.fees.maxFeePerGas = null;
+					globalData.fees.maxPriorityFeePerGas = null;
+				}
+				
+				const gasPriceText = ethers.formatUnits(maxFeePerGas || gasPrice, 'gwei')
+				
+				$('.fee-rate').text(`${gasPriceText} gwei`);
+
+				// update balance
+				globalData.balance = ethBalance;
+
+				$('.wallet-balance .amount').text(ethers.formatUnits(ethBalance, network.decimals));
+				$('.wallet-balance .ticker').text(getConfig()['ticker'])
+
+				// update erc20 balances
+				const tokenBalanceResults = results.flat().slice(3);
+
+				const tokenData = chainTokens.map((token, i) => {
+					const balance = tokenBalanceResults[i];
+					
+					if (!balance) {
+						return;
+					}
+					
+					const tokenStr = `<img src="${token.logoURI}" alt="${token.name}" height="24">  ${token.name} (${token.symbol})`;
+					const balanceStr = `${ethers.formatUnits(balance, token.decimals)} ${token.symbol}`;
+					
+					return {
+						token: tokenStr,
+						tokenAddress: token.address,
+						balance: balanceStr,
+					}
+				}).filter(t => t);
+
+				globalData.tokenTable.clear();
+				globalData.tokenTable.rows.add(tokenData);
+				globalData.tokenTable.draw();
+				
+				console.log(`Got ${tokenData.length} tokens for ${globalData.chainId} chain (Out of ${chainTokens.length})`);
+
+				console.log(`RPC: ${getBackend()}, Network: ${globalData.chainId}, Block ${blockNumber}, gasPrice: ${gasPriceText} gwei`);
+			}
+
+			// Refresh UTXO list and wallet balance
+			function walletBalance() {
+				const network = getConfig();
+
+				if (network.isBtc) {
+					return walletBalanceBtc();
+				} else if (network.isEth) {
+					return walletBalanceEth();
+				}
+			}
+
+			function openWalletBtc(keys, keyType, mnemonic, mnemonicIndex) {
+				const network = getConfig();
+				const keyPrefix = electrumKeys[getAddressType()];
+
+				if (keyType === 'mnemonic') {
+					const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic));
+					const path = `m/${getDerivation()}'/${network.network.versions.bip44 || 0}'/0'/0/0`;
+
+					keys = root.derivePath(path);
+
+					globalData.keys = keys;
+				}
+
 				const address = getAddress(keys.publicKey)
 				const redeem = getAddressScript(address).toString('hex')
 
 				globalData.address = address
 
-				$('#wallet-keys-pubkey input').val(keys.publicKey.toString('hex'))
-				$('#wallet-keys-privkey input').val(keys.toWIF())
-				$('#wallet-keys-script input').val(redeem)
+				$('#wallet-keys-mnemonic input').val(mnemonic || '');
+				$('#wallet-keys-address input').val(address);
+				$('#wallet-keys-pubkey input').val(keys.publicKey.toString('hex'));
+				$('#wallet-keys-privkey input').val(`${keyPrefix}:${keys.toWIF()}`);
+				$('#wallet-keys-script input').val(redeem);
 				
-				$('#wallet-address').html(address)
-				$('#open-block').addClass('d-none')
-				$('#wallet-block').removeClass('d-none')
+				$('#wallet-address').html(address);
 				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`)
 				showQrAddress(getConfig()['uri'] + address)
-
-				// Init wallet stuffs
-				walletBalance()
-				checkBalanceLoop()
-				setHomeTitle()
 			}
 
-			function showConfirmation(amount) {
-				globalData.resetTx()
-				$('#confirm-amount').text(amount + ' ' + getConfig()['ticker'])
-				$('#send-modal').modal('toggle')
-				$('#send-title').text(messages.title['sure'])
-				$('#send-cancel').removeClass('disabled')
-				$('#send-confirm').removeClass('disabled')
-				$('#send-cancel').removeClass('d-none')
-				$('#send-confirm').removeClass('d-none')
-				$('#send-close-footer').addClass('d-none')
-				$('#send-close-footer').addClass('disabled')
-				$('#confirm-screen').removeClass('d-none')
-				$('#status-screen').addClass('d-none')
-				$('#status-screen span').html('')
-
-				$.each($('#send-outputs .send-outputs-item'), function(key, item) {
-					const address = $('[name="send-address"]', item).val().trim()
-					const value = $('[name="send-amount"]', item).val()
-					globalData.tx.outputs.push({
-						address,
-						value: amountFormat(value, true),
-					})
-				})
-
-				if ($('#op-return-data').val()) {
-					globalData.tx.outputs.push({
-						returnData: $('#op-return-data').val(),
-						value: 0,
-					})
+			async function openWalletEth(keys, keyType, mnemonic, mnemonicIndex) {
+				if (!globalData.provider) {
+					await getProvider();
 				}
 
-				globalData.tx.amount = amountFormat(amount, true)
+				if (keyType === 'mnemonic') {
+					const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, `m/44'/60'/0'/0/${mnemonicIndex}`);
+
+					globalData.signer = wallet.connect(globalData.provider);
+
+					globalData.address = globalData.signer.address;
+					// for frontend purpose
+					keys = globalData.signer.privateKey;
+
+				// should check if window.ethereum exists before calling this function
+				} else if (keyType === 'browser') {
+					const providerNetwork = await globalData.provider.getNetwork();
+
+					const browserProvider = new ethers.BrowserProvider(window.ethereum, providerNetwork);
+
+					globalData.signer = await browserProvider.getSigner(0);
+
+					if (Number(window.ethereum.networkVersion) !== providerNetwork.chainid) {
+						await switchNetwork();
+					}
+
+					globalData.address = globalData.signer.address
+					globalData.browserProvider = browserProvider;
+
+					window.ethereum.on('chainChanged', closeWalletTimeout);
+					window.ethereum.on('accountsChanged', closeWalletTimeout);
+					window.ethereum.on('disconnect', closeWalletTimeout);
+
+				// view-only wallet
+				} else if (keyType === 'view-only') {
+					globalData.signer = new ethers.VoidSigner(globalData.address, globalData.provider);
+
+				} else {
+					globalData.signer = new ethers.Wallet(keys, globalData.provider);
+
+					globalData.address = globalData.signer.address
+				}
+
+				$('#wallet-keys-mnemonic input').val(mnemonic || '');
+				$('#wallet-keys-address input').val(globalData.address);
+				$('#wallet-keys-pubkey input').val(globalData.signer.signingKey?.compressedPublicKey || '');
+				$('#wallet-keys-privkey input').val(keys || '');
+
+				$('#wallet-address').html(globalData.address);
+				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${globalData.address}`);
+				showQrAddress(getConfig()['uri'] + globalData.address);
+			}
+
+			// Open wallet by key
+			async function openWallet(keys, keyType, mnemonic, mnemonicIndex = 0) {
+				try {
+					const network = getConfig();
+					const backend = getBackend();
+					const isOffline = backend === 'Offline (For signing)'
+
+					if (network.isBtc) {
+						openWalletBtc(keys, keyType, mnemonic, mnemonicIndex);
+					} else if (network.isEth) {
+						showMessage(getText('opening-wallet'), false);
+						await openWalletEth(keys, keyType, mnemonic, mnemonicIndex);
+						hideMessage();
+					}
+
+					$('.wallet-balance .amount').text('');
+					$('.wallet-balance .ticker').text(getText('loading'));
+					$('.coinbase-balance').hide();
+
+					// Init wallet stuffs
+					if (!isOffline) {
+						showMessage(getText('loading-balance'), false);
+						await walletBalance();
+						hideMessage();
+
+						let syncingBalance = false;
+
+						globalData.walletInterval = setInterval(async () => {
+							try {
+								if (syncingBalance) {
+									return;
+								}
+								syncingBalance = true;
+								await walletBalance();
+								syncingBalance = false;
+							} catch (error) {
+								console.log(error);
+								showMessage(messages.error['balance-load-failed']);
+								syncingBalance = false;
+							}
+						}, 20000);
+					}
+
+					$('#open-block').addClass('d-none');
+					$('#wallet-block').removeClass('d-none');
+					setHomeTitle();
+				} catch (error) {
+					console.log(error);
+					showMessage(messages.error['wallet-open-failed']);
+				}
 			}
 
 			function stopStream() {
@@ -1268,7 +2250,7 @@
 				// One transaction could only relay 100KB dividing with legacy inputs it could only have 675 maximum
 				if (inputs.length + outputs.length > 650) {
 					const error = `Selected UTXO is too big (inputs: ${inputs.length}, outputs: ${outputs.length}), make sure to consolidate UTXOs before using it`
-					throw new Error(error)
+					throw new Error(error);
 				}
 
 				return inputs
@@ -1276,19 +2258,28 @@
 
 			/**
 			 * Build bitcoinjs PSBT object
-			 * @param {Buffer} [publicKey] Buffer array of signer's public key
 			 * @param {Array<tx>} [txs] Array of transaction object fetched from backend, can be empty when segwit inputs
 			 * @param {Array<inputs>} [inputs] Array of utxo object fetched from backend, 
 			 * @param {Array<outputs>} [outputs] Array of desired payment outputs
 			 * @param {string} [changeAddress] Address to receive change amounts
 			 */
-			function buildPsbt(publicKey, txs, inputs, outputs, changeAddress) {
-				const feeRates = Number(globalData.rfee)
-				// todo: add config for this
-				const feeMultiplier = 2
-				const feePerByte = Math.round(feeRates * feeMultiplier * (10 ** getConfig()['decimals']) / 1000)
-
+			function buildPsbt(txs, inputs, outputs, changeAddress) {
 				const network = getConfig()['network']
+
+				const feePerByte = globalData.rfee
+
+				// Get public key to create psbt
+				const publicKey = globalData.keys.publicKey
+
+				// Get necessary address info
+				const address = getAddress(publicKey)
+				const addressType = getAddressType()
+				const script = getAddressScript(address)
+				const tapInternalKey = publicKey.slice(1, 33)
+
+				if (!changeAddress) {
+					changeAddress = address
+				}
 
 				let inputAmounts = 0
 				let outputAmounts = 0
@@ -1305,17 +2296,11 @@
 					const index = input.vout
 					const value = input.value = Number(input.value)
 
-					const tx = txs.find(t => t.txid === hash)
-					const vout = (tx?.vout || []).find(v => v.n === index)
-
-					const script = vout ? Buffer.from(vout.hex, 'hex') : getAddressScript(getAddress(publicKey))
-					const type = input.type = getScriptType(script)
 					inputAmounts += value
-					inputBytes += input.bytes = getBytes(type)
+					inputBytes += input.bytes = getBytes(addressType)
 					
 					// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
-					if (type === 'taproot') {
-						const tapInternalKey = publicKey.slice(1, 33)
+					if (addressType === 'taproot') {
 						psbt.addInput({
 							hash,
 							index,
@@ -1325,7 +2310,7 @@
 							},
 							tapInternalKey
 						})
-					} else if (type === 'bech32') {
+					} else if (addressType === 'bech32') {
 						psbt.addInput({
 							hash,
 							index,
@@ -1334,7 +2319,7 @@
 								value
 							}
 						})
-					} else if (type === 'segwit') {
+					} else if (addressType === 'segwit') {
 						const { output: redeemScript } = bitcoin.payments.p2wpkh({
 							pubkey: publicKey,
 							network,
@@ -1349,11 +2334,11 @@
 							redeemScript
 						})
 					} else {
+						const tx = txs.find(t => t.txid === hash)
 						// Skip for simulation (should error when signing phase)
 						if (!tx?.hex) {
 							return
 						}
-
 						psbt.addInput({
 							hash,
 							index,
@@ -1428,12 +2413,84 @@
 				}
 			}
 
-			function signPsbt(psbt, inputs, keys) {
-				inputs.forEach(({ type }, index) => {
-					// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
-					if (type === 'taproot') {
-						const tapKey = keys.publicKey.slice(1, 33)
-						const tweakedKey = keys.tweak(bitcoin.crypto.taggedHash('TapTweak', tapKey))
+			function importPsbt(psbtHex) {
+				const network = getConfig()['network'];
+				const psbt = bitcoin.Psbt.fromHex(psbtHex, { network });
+
+				const inputByte = getBytes(getAddressType());
+
+				let inputAmounts = 0;
+				let outputAmounts = 0;
+
+				const inputBytes = inputByte * psbt.txInputs.length;
+				// Add change address bytes
+				let outputBytes = 0;
+
+				const inputs = psbt.txInputs.map((input, index) => {
+					const txInput = psbt.data.inputs[index];
+					const nonWitnessTx = txInput.nonWitnessUtxo ? bitcoin.Transaction.fromHex(txInput.nonWitnessUtxo, { network }) : undefined
+					
+					const txid = input.hash.toString('hex');
+					const vout = input.index;
+					const value = txInput.witnessUtxo?.value || nonWitnessTx?.outs?.[vout]?.value;
+					
+					inputAmounts += value;
+					
+					return {
+						txid,
+						vout,
+						value,
+						bytes: inputBytes
+					}
+				});
+
+				const outputs = psbt.txOutputs.map((output) => {
+					const bytes = getBytes(getScriptType(output.script), false);
+
+					outputAmounts += output.value;
+					outputBytes += bytes;
+
+					return {
+						...output,
+						bytes
+					}
+				});
+
+				const vBytes = 10 + inputBytes + outputBytes;
+				const fees = inputAmounts - outputAmounts;
+
+				const createdTx = {
+					fees: amountFormat(fees),
+					inputAmounts: amountFormat(inputAmounts),
+					inputs,
+					outputAmounts: amountFormat(outputAmounts),
+					outputs,
+					vBytes
+				}
+
+				console.log('UTXO:', createdTx)
+
+				return {
+					psbt,
+					...createdTx
+				}
+			}
+
+			function signPsbt(psbt) {
+				const { keys } = globalData
+				const addressType = getAddressType()
+
+				// If we opened read only
+				if (!keys || keys.signOnly) {
+					throw new Error('Can not sign psbt with view-only wallet!');
+				}
+
+				// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
+				const tapKey = keys.publicKey.slice(1, 33)
+				const tweakedKey = addressType === 'taproot' ? keys.tweak(bitcoin.crypto.taggedHash('TapTweak', tapKey)) : undefined;
+
+				psbt.txInputs.forEach((_, index) => {
+					if (addressType === 'taproot') {
 						psbt.signInput(index, tweakedKey)
 						return
 					}
@@ -1445,130 +2502,622 @@
 				return psbt.extractTransaction()
 			}
 
-			function getMaxSpendable(changeAddress = globalData.address) {
-				const publicKey = globalData.keys.publicKey
-				const inputs = globalData.utxos
+			function getMaxSpendableBtc(changeAddress, inputs = globalData.utxos) {
+				const feePerByte = globalData.rfee;
+				
+				const inputAmounts = inputs.reduce((acc, curr) => acc + Number(curr.value), 0);
+				const inputBytes = getBytes(getAddressType()) * inputs.length;
+				const outputBytes = getBytes(getAddressType(), false)
+				    + getBytes(getScriptType(getAddressScript(changeAddress)), false);
 
+				const vBytes = 10 + inputBytes + outputBytes;
+				const fees = feePerByte * vBytes;
+
+				return inputAmounts - fees;
+			}
+
+			function getMaxSpendable(changeAddress = globalData.address) {
 				try {
-					const { outputAmounts, fees } = buildPsbt(publicKey, [], inputs, [], changeAddress)
-					return outputAmounts - fees
+					const network = getConfig();
+
+					if (network.isBtc) {
+						return ethers.formatUnits(getMaxSpendableBtc(changeAddress), network.decimals);
+
+					// populateEth function should be able to calculate full spendable balance excluding fees
+					// So we specify the full balance here
+					} else if (network.isEth) {
+						return ethers.formatUnits(globalData.balance, network.decimals);
+					}
 				// If we have less than fees
 				} catch {
 					return 0
 				}
 			}
 
+			async function populateBtc() {
+				// 1. Show UTXO build status
+				$('#confirm-screen').hide();
+				$('#status-screen').show();
+				$('#status-screen .extra-info').empty();
+				$('#status-screen span').html(messages.tx['generating']);
+				$('#tx-table').empty();
+
+				const network = getConfig();
+
+				const outputs = [];
+
+				$.each($('#send-outputs .send-outputs-item'), (key, item) => {
+					const address = $('[name="send-address"]', item).val().trim()
+					const value = amountFormat($('[name="send-amount"]', item).val(), true)
+					
+					if (!value || value <= 0) {
+						throw new Error(messages.error['not-valid-amount']);
+					}
+					
+					if (!validateAddress(address)) {
+						throw new Error(messages.error['not-valid-address']);
+					}
+
+					outputs.push({
+						address,
+						value,
+					});
+				});
+
+				if ($('#optional-data').val()) {
+					outputs.push({
+						returnData: $('#optional-data').val(),
+						value: 0,
+					});
+				}
+
+				const outputsCoins = amountFormat(outputs.reduce((acc, curr) => acc + curr.value, 0));
+				const inputs = getInputs(globalData.utxos, outputs);
+
+				if (!Number(outputsCoins) || Number(outputsCoins) < 0) {
+					throw new Error(messages.error['not-enough-funds']);
+				}
+
+				$('#status-screen span').html(messages.tx['loading-utxo'])
+
+				// Legacy inputs should have the full transaction input according to the BIP-174 standard
+				const txs = getAddressType() === 'legacy'
+					? await getTransactions([...new Set(inputs.map(t => t.txid))])
+					: []
+
+				const tx = buildPsbt(txs, inputs, outputs, globalData.address);
+
+				globalData.tx = tx;
+
+				// 2. Show confirmation screen
+				$('#tx-table').empty();
+				$('#tx-table').append(`
+				  <table class="table table-bordered table-tx">
+						<tbody>
+							<tr>
+								<td>Network</td>
+								<td>${network.name}</td>
+							</tr>
+							<tr>
+								<td>Input Amounts</td>
+								<td>${tx.inputAmounts} ${network.ticker}</td>
+							</tr>
+							<tr>
+								<td>Output Amounts</td>
+								<td>${tx.inputAmounts} ${network.ticker}</td>
+							</tr>
+							${globalData.tx.outputs.map((output, i) => `
+							<tr>
+								<td>Output ${i} (${output.address})</td>
+								<td>${amountFormat(output.value)} ${network.ticker}</td>
+							</tr>
+							`).join('')}
+							<tr>
+								<td>Value</td>
+								<td>${outputsCoins} ${network.ticker}</td>
+							</tr>
+							<tr>
+								<td>Fees</td>
+								<td>${tx.fees} ${network.ticker} (${amountFormat(tx.fees, true) / tx.vBytes} sat/vByte)</td>
+							</tr>
+							<tr>
+								<td>vBytes</td>
+								<td>${tx.vBytes}</td>
+							</tr>
+						</tbody>
+					</table>
+				`);
+				$('#confirm-amount').text(`${outputsCoins} ${network.ticker} (Fees: ${tx.fees} ${network.ticker})`);
+
+				$('#status-screen').hide();
+				$('#confirm-screen').show();
+			}
+
+			async function populateEth() {
+				// 1. Show UTXO build status
+				$('#confirm-screen').hide();
+				$('#status-screen').show();
+				$('#status-screen .extra-info').empty();
+				$('#status-screen span').html(messages.tx['generating']);
+				$('#tx-table').empty();
+
+				const network = getConfig();
+
+				const { provider, signer, Multicall } = globalData;
+
+				let tokenAddress, toAddress;
+
+				const rawTokenAddress = $('#send-token-outputs input[name="send-address"]').last().val();
+				const rawToAddress = $('#send-outputs input[name="send-address"]').last().val();
+				const rawData = $('#optional-data').val();
+
+				if (rawTokenAddress) {
+					try {
+						tokenAddress = ethers.getAddress(rawTokenAddress);
+					} catch {
+						throw new Error(messages.error['not-valid-token-address']);
+					}
+				}
+
+				if (rawToAddress || !rawToAddress && !rawData) {
+					try {
+						toAddress = ethers.getAddress(rawToAddress);
+					} catch {
+						throw new Error(messages.error['not-valid-address']);
+					}
+				}
+				
+				const txData = {
+					from: signer.address,
+					chainId: globalData.chainId,
+					...globalData.fees
+				};
+
+				const gasPrice = txData.maxFeePerGas
+				    ? txData.maxFeePerGas + txData.maxPriorityFeePerGas
+					: txData.gasPrice
+				
+				let stringValue = tokenAddress
+				    ? $('#send-token-outputs input[name="send-amount"]').last().val()
+				    : $('#send-outputs input[name="send-amount"]').last().val();
+
+				if (tokenAddress) {
+					const [nonce, symbol, decimals, tokenBalance] = (await Promise.all([
+						provider.getTransactionCount(signer.address, 'pending'),
+						multicall([
+							{
+								address: tokenAddress,
+								interface: ercInterface,
+								name: 'symbol',
+							},
+							{
+								address: tokenAddress,
+								interface: ercInterface,
+								name: 'decimals',
+							},
+							{
+								address: tokenAddress,
+								interface: ercInterface,
+								name: 'balanceOf',
+								params: [signer.address]
+							},
+						]),
+					])).flat();
+
+					txData.nonce = nonce;
+					txData.to = tokenAddress;
+					txData.value = 0;
+
+					const tokenValue = ethers.parseUnits(stringValue || '0', decimals);
+
+					stringValue += ` ${symbol}`;
+
+					if (tokenValue > tokenBalance) {
+						const error = `Low ${symbol} balance wanted ${stringValue} got ${ethers.formatUnits(tokenBalance, decimals)} ${symbol}`;
+						throw new Error(error);
+					}
+
+					txData.data = ercInterface.encodeFunctionData('transfer', [toAddress, tokenValue]);
+
+				} else {
+					const [nonce, ethBalance] = await Promise.all([
+						provider.getTransactionCount(signer.address, 'pending'),
+						provider.getBalance(signer.address),
+					]);
+					const [symbol, decimals] = [network.ticker, network.decimals];
+
+					txData.nonce = nonce;
+					txData.data = rawData || '0x';
+					txData.to = toAddress;
+
+					const ethValue = ethers.parseUnits(stringValue || '0', decimals);
+
+					stringValue += ` ${symbol}`;
+
+					if (ethValue >= ethBalance) {
+						txData.value = ethBalance - (gasPrice * 1000000n);
+						
+						const gasLimit = await provider.estimateGas(txData);
+
+						txData.value = ethBalance - (gasPrice * (gasLimit !== 21000n ? gasLimit * 11000n / 10000n : gasLimit));
+
+						stringValue = `${ethers.formatUnits(txData.value, decimals)} ${symbol}`;
+
+					} else {
+						txData.value = ethValue;
+
+					}
+				}
+
+				const gasLimit = await provider.estimateGas(txData);
+
+				txData.gasLimit = gasLimit !== 21000n ? gasLimit * 11000n / 10000n : gasLimit;
+
+				const txFees = gasPrice * txData.gasLimit;
+
+				const tx = await signer.populateTransaction(txData);
+
+				tx.stringValue = stringValue;
+
+				console.log('TX:', tx);
+
+				globalData.tx = tx;
+
+				// 2. Show confirmation screen
+				$('#tx-table').empty();
+				$('#tx-table').append(`
+				  <table class="table table-bordered table-tx">
+						<tbody>
+							<tr>
+								<td>Network</td>
+								<td>${network.name}</td>
+							</tr>
+							<tr>
+								<td>ChainId</td>
+								<td>${txData.chainId}</td>
+							</tr>
+							<tr>
+								<td>From</td>
+								<td>${txData.from}</td>
+							</tr>
+							<tr>
+								<td>To</td>
+								<td>${toAddress || getText('contract-creation')}</td>
+							</tr>
+							${(tokenAddress) ? `
+							<tr>
+								<td>TokenAddress</td>
+								<td>${tokenAddress}</td>
+							</tr>
+							` : ''}
+							<tr>
+								<td>Nonce</td>
+								<td>${txData.nonce}</td>
+							</tr>
+							<tr>
+								<td>Value</td>
+								<td>${stringValue}</td>
+							</tr>
+							<tr>
+								<td>GasLimit</td>
+								<td>${txData.gasLimit}</td>
+							</tr>
+							${txData.maxFeePerGas ? `
+							<tr>
+								<td>MaxFeePerGas</td>
+								<td>${ethers.formatUnits(txData.maxFeePerGas, 'gwei')} gwei</td>
+							</tr>
+							<tr>
+								<td>MaxPriorityFeePerGas</td>
+								<td>${ethers.formatUnits(txData.maxPriorityFeePerGas, 'gwei')} gwei</td>
+							</tr>
+							`: `
+							<tr>
+								<td>GasPrice</td>
+								<td>${ethers.formatUnits(txData.gasPrice, 'gwei')} gwei</td>
+							</tr>
+							`}
+							<tr>
+								<td>Tx Fee</td>
+								<td>${ethers.formatUnits(txFees, network.decimals)} ${network.ticker}</td>
+							</tr>
+						</tbody>
+					</table>
+				`);
+				$('#confirm-amount').text(`${stringValue} (Fees: ${ethers.formatUnits(txFees, network.decimals)} ${network.ticker})`);
+
+				$('#status-screen').hide();
+				$('#confirm-screen').show();
+			}
+
+			async function populateConsolidation() {
+				globalData.resetTx();
+				$('#send-modal').modal('toggle')
+				$('#send-title').text(messages.title['sure'])
+				$('#send-cancel').show();
+				$('#send-create').hide();
+				$('#send-sign').hide();
+				$('#send-confirm').show();
+				$('#send-close-footer').hide();
+
+				// 1. Show UTXO build status
+				$('#confirm-screen').hide();
+				$('#status-screen').show();
+				$('#status-screen .extra-info').empty();
+				$('#status-screen span').html(messages.tx['generating']);
+				$('#tx-table').empty();
+
+				$('#status-screen span').html(messages.tx['loading-utxo']);
+
+				// Legacy inputs should have the full transaction input according to the BIP-174 standard
+				const txs = getAddressType() === 'legacy'
+					? await getTransactions([...new Set(globalData.utxos.map(t => t.txid))])
+					: []
+
+				const inputs = chunk(globalData.utxos, 500);
+				const outputs = inputs.map(i => getMaxSpendableBtc(globalData.address, i));
+				
+				const psbts = inputs.map((input, index) => {
+					const output = [{ address: globalData.address, value: outputs[index] }]
+					return buildPsbt(txs, input, output, globalData.address);
+				});
+
+				const fees = psbts.reduce((acc, curr) => acc + Number(curr.fees), 0);
+
+				globalData.tx = psbts;
+
+				// 2. Show confirmation screen
+				$('#confirm-amount').text(`${globalData.utxos.length} inputs (Consolidation Txs: ${psbts.length}, Fees: ${fees} ${getConfig()['ticker']})`);
+
+				$('#status-screen').hide();
+				$('#confirm-screen').show();
+			}
+
+			async function populateTransaction() {
+				try {
+					globalData.resetTx();
+					$('#send-modal').modal('toggle')
+					$('#send-title').text(messages.title['sure'])
+					$('#send-cancel').show();
+					$('#send-create').show();
+					$('#send-sign').show();
+					$('#send-confirm').show();
+					$('#send-close-footer').hide();
+
+					const network = getConfig();
+
+					if (network.isBtc) {
+						await populateBtc();
+					} else if (network.isEth) {
+						await populateEth();
+					}
+				} catch (error) {
+					console.log(error);
+					globalData.resetTx();
+					$('#status-screen span').html(messages.error['broadcast-failed']);
+					$('#send-title').text(messages.title['failed']);
+					$('#status-screen .extra-info').html(`
+						<div class="mt-3">
+							<textarea class="form-control" readonly cols="30" rows="10">${error.message}</textarea>
+						</div>
+					`);
+				}
+			}
+
+			function createTransaction() {
+				try {
+					$('#send-cancel').hide();
+					$('#send-create').hide();
+					$('#send-sign').hide();
+					$('#send-confirm').hide();
+					$('#confirm-screen').hide();
+					$('#status-screen').show();
+					$('#send-close-footer').show();
+					$('#send-title').text(getText('offline-tx'));
+					$('#status-screen .extra-info').empty();
+					$('#status-screen span').html(getText('offline-tx'));
+
+					const network = getConfig();
+
+					const serailizedTx = network.isBtc
+					    ? globalData.tx.psbt.toHex()
+						: network.isEth
+						    ? serializeTransaction(globalData.tx)
+							: '';
+
+					$('#status-screen .extra-info').html(`
+					    <div class="mt-3">
+							<textarea class="form-control" readonly cols="30" rows="10">${serailizedTx}</textarea>
+						</div>
+					`);
+
+					resetTxForm();
+				} catch (err) {
+					console.log(err);
+					$('#status-screen span').html(messages.error['broadcast-failed']);
+					$('#send-title').text(messages.title['failed']);
+					$('#status-screen .extra-info').html(`
+						<div class="mt-3">
+							<textarea class="form-control" readonly cols="30" rows="10">${err.message}</textarea>
+						</div>
+					`);
+				}
+			}
+
+			async function signTransaction() {
+				try {
+					$('#send-cancel').hide();
+					$('#send-create').hide();
+					$('#send-sign').hide();
+					$('#send-confirm').hide();
+					$('#confirm-screen').hide();
+					$('#status-screen').show();
+					$('#send-close-footer').show();
+					$('#send-title').text(getText('signed-tx'));
+					$('#status-screen .extra-info').empty();
+					$('#status-screen span').html(getText('signed-tx'));
+
+					const network = getConfig();
+
+					const signedTx = network.isBtc
+					    ? signPsbt(globalData.tx.psbt).toHex()
+						: network.isEth
+						    ? await globalData.signer.signTransaction(globalData.tx)
+							: '';
+
+					$('#status-screen .extra-info').html(`
+					    <div class="mt-3">
+							<textarea class="form-control" readonly cols="30" rows="10">${signedTx}</textarea>
+						</div>
+					`);
+
+					resetTxForm();
+				} catch (err) {
+					console.log(err);
+					$('#status-screen span').html(messages.error['broadcast-failed']);
+					$('#send-title').text(messages.title['failed']);
+					$('#status-screen .extra-info').html(`
+						<div class="mt-3">
+							<textarea class="form-control" readonly cols="30" rows="10">${err.message}</textarea>
+						</div>
+					`);
+				}
+			}
+
 			async function sendTransaction() {
 				try {					
-					$('#send-cancel').addClass('disabled')
-					$('#send-confirm').addClass('disabled')
-					$('#confirm-screen').addClass('d-none')
-					$('#status-screen').removeClass('d-none')
-					$('#send-title').text(messages.title['processing'])
-					$('#status-screen .extra-info').empty()
-					$('#status-screen span').html(messages.tx['generating'])
+					$('#send-cancel').hide();
+					$('#send-create').hide();
+					$('#send-sign').hide();
+					$('#send-confirm').hide();
+					$('#confirm-screen').hide();
+					$('#status-screen').show();
+					$('#send-close-footer').show();
+					$('#send-title').text(messages.title['processing']);
+					$('#status-screen .extra-info').empty();
+					$('#status-screen span').html(messages.tx['sending']);
 
-					const keys = globalData.keys
-					const outputs = globalData.tx.outputs
-					const inputs = getInputs(globalData.utxos, outputs)
+					let txid;
 
-					$('#status-screen span').html(messages.tx['loading-utxo'])
+					const network = getConfig();
 
-					// Legacy inputs should have the full transaction input according to the BIP-174 standard
-					const txs = getAddressType() === 'legacy'
-						? await getTransactions([...new Set(inputs.map(t => t.txid))])
-						: []
+					if (network.isBtc) {
+						// Consolidation TX
+						if (Array.isArray(globalData.tx)) {
+							const txs = globalData.tx;
 
-					const { psbt } = buildPsbt(keys.publicKey, txs, inputs, outputs, globalData.address)
+							const txidContext = [];
 
-					const tx = signPsbt(psbt, inputs, keys)
+							for (let i = 0; i < txs.length; ++i) {
+								const tx = signPsbt(txs[i].psbt);
+								const txid = await transactionBroadcast(tx.toHex());
 
-					const txid = await transactionBroadcast(tx.toHex())
+								txidContext.push(`
+								<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
+									${txid}
+								</a>
+								`)
+							}
+
+							$('#status-screen span').html(txidContext.join(''));
+							$('#send-title').text(messages.title['success']);
+							resetTxForm();
+
+							return;
+						}
+						
+						const tx = signPsbt(globalData.tx.psbt);
+						txid = await transactionBroadcast(tx.toHex());
+
+					} else if (network.isEth) {
+						txid = (await globalData.signer.sendTransaction(globalData.tx)).hash;
+					}
 
 					$('#status-screen span').html(`
 						<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
 							${txid}
 						</a> 
-					`)
-					$('#send-title').text(messages.title['success'])
+					`);
+					$('#send-title').text(messages.title['success']);
+
+					resetTxForm();
 				} catch (err) {
-					console.log(err)
-					$('#status-screen span').html(messages.error['broadcast-failed'])
-					$('#send-title').text(messages.title['failed'])
+					console.log(err);
+					$('#status-screen span').html(messages.error['broadcast-failed']);
+					$('#send-title').text(messages.title['failed']);
 					$('#status-screen .extra-info').html(`
 						<div class="mt-3">
 							<textarea class="form-control" readonly cols="30" rows="10">${err.message}</textarea>
 						</div>
-					`)
+					`);
 				}
-				resetTxForm()
+			}
 
-				$('#send-cancel').addClass('d-none')
-				$('#send-confirm').addClass('d-none')
-				$('#send-close-footer').removeClass('d-none')
-				$('#send-close-footer').removeClass('disabled')
+			let onClosing;
+
+			// handle metamask event with timeout
+			function closeWalletTimeout() {
+				if (!onClosing) {
+					onClosing = true;
+
+					closeWallet()
+					setTimeout(() => { onClosing = false; }, 1000);
+				}
 			}
 
 			// Close wallet
 			function closeWallet() {
 				$('#open-block').removeClass('d-none')
 				$('#wallet-block').addClass('d-none')
+				$('.wallet-balance .amount').text('')
+				$('.wallet-balance .ticker').text(getText('loading'))
+
+				$('#wallet-keys-mnemonic input').val('');
+				$('#wallet-keys-address input').val('');
+				$('#wallet-keys-pubkey input').val('');
+				$('#wallet-keys-privkey input').val('');
+				$('#wallet-keys-script input').val('');
+				
+				$('#wallet-address').html('');
+				$('#history-link').attr('href', '');
+
+				if (globalData.browserProvider) {
+					window.ethereum.removeListener('accountsChanged', closeWalletTimeout);
+					window.ethereum.removeListener('chainChanged', closeWalletTimeout);
+				}
+
 				globalData.clear()
 				setHomeTitle()
 			}
 
-			// Create new wallet
-			$('#footer-create').click(function() {
-				const keys = ECPair.makeRandom({'network': getConfig()['network']})
-				const address = getAddress(keys.publicKey)
-
-				if (address) {
-					$('#create-keys-address input').val(address)
-					$('#create-keys-pubkey input').val(keys.publicKey.toString('hex'))
-					$('#create-keys-privkey input').val(keys.toWIF())
-				}
-			})
-
-			// Broadcast raw transaction
-			$('#footer-broadcast').click(async function(){
-				const rawtx = $('#transaction-broadcast-raw')
-				try {
-					const txid = await transactionBroadcast(rawtx.val())
-
-					showMessage(`
-						${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">` + txid + `</a>
-					`)
-				} catch (err) {
-					console.log(err)
-					showMessage(messages.error['broadcast-failed'])
-				}
-				rawtx.val('')
-			})
-
-			// Reset sending form
+			// Reset form
 			function resetTxForm() {
 				$('.send-additional-output').remove()
 				$('#wallet-send input').val('')
 				globalData.resetTx()
 			}
 
-			function initWallet() {
-				// Open only if key is valid
-				if (globalData.keys) {
-					openWallet(globalData.keys)
-				}
-			}
-
 			// All starts here
 			$(document).ready(function() {
 				initLang()
+				initFeeMultiplier()
 
 				$('#wallet-version').text(walletVersion)
 				$('#wallet-backend input').val(getBackend())
-				$('#address-type-select select').val(getAddressType());
+				$('.address-type-select').val(getAddressType());
 
 				displayNetworks()
+				displayBackends()
 				routePage()
+
+				globalData.tokenTable = $('#tokens-table').DataTable({
+					autoWidth: false,
+					columns: [
+						{ data: 'token' },
+						{ data: 'tokenAddress' },
+						{ data: 'balance' },
+					]
+				});
 
 				$('.tab-link').click(function(e) {
 					const tabFamily = $(this).data('tab-family')
@@ -1588,101 +3137,303 @@
 					$(window).trigger('hashchange')
 				}
 
-				$('#send-tx').click(function() {
-					let error = false
-					let total = 0
+				$('#send-tx').click(function(e) {
+					e.preventDefault();
+					populateTransaction();
+				});
 
-					$.each($('#send-outputs .send-outputs-item'), function(key, item) {
-						const address = $('[name="send-address"]', item).val().trim()
-						const amount = $('[name="send-amount"]', item).val()
+				$('#sign-tx').click(function(e) {
+					e.preventDefault();
 
-						if ((isNaN(amount)) || amount <= 0) {
-							showMessage(messages.error['not-valid-amount'])
-							error = true
+					const network = getConfig();
+
+					try {
+						globalData.resetTx();
+
+						if (network.isBtc) {
+							globalData.tx = importPsbt($('#wallet-sign-input').val());
+
+						} else if (network.isEth) {
+							globalData.tx = parseTransaction($('#wallet-sign-input').val());
 						}
 
-						if (validateAddress(address) == false) {
-							showMessage(messages.error['not-valid-address'])
-							error = true
+						$('#send-modal').modal('toggle');
+						$('#send-title').text(messages.title['sure']);
+						$('#send-cancel').show();
+						$('#send-create').show();
+						$('#send-sign').show();
+						$('#send-confirm').show();
+						$('#send-close-footer').hide();
+						$('#tx-table').empty();
+
+						let formattedTx, formattedValue;
+
+						if (network.isBtc) {
+							formattedTx = {
+								fees: globalData.tx.fees,
+								inputAmounts: globalData.tx.inputAmounts,
+								inputs: globalData.tx.inputs,
+								outputAmounts: globalData.tx.outputAmounts,
+								outputs: globalData.tx.outputs.map(output => ({
+									value: output.value,
+									address: output.address,
+									bytes: output.bytes
+								})),
+								vBytes: globalData.tx.vBytes
+							}
+
+							formattedValue = `${formattedTx.outputAmounts} ${network.ticker} (Fees: ${globalData.tx.fees} ${network.ticker})`;
+						} else if (network.isEth) {
+							formattedTx = globalData.tx
+
+							const gasPrice = formattedTx.maxFeePerGas
+							    ? BigInt(formattedTx.maxFeePerGas) + BigInt(formattedTx.maxPriorityFeePerGas)
+								: BigInt(formattedTx.gasPrice);
+
+							formattedValue = (formattedTx.stringValue || `${ethers.formatUnits(formattedTx.value, network.decimals)}  ${network.ticker}`)
+							    + ` (Fees: ${ethers.formatUnits(gasPrice * BigInt(formattedTx.gasLimit), network.decimals)} ${network.ticker})`;
 						}
 
-						total += Number(amount)
-					})
+						$('#status-screen .extra-info').html(`
+						    <div class="mt-3">
+								<textarea class="form-control" readonly cols="30" rows="10">${JSON.stringify(formattedTx, null, 2)}</textarea>
+							</div>
+						`);
 
+						$('#confirm-amount').text(formattedValue);
 
-					total = parseFloat(total.toFixed(getConfig()['decimals']))
-
-					if (!error) {
-						if (total <= amountFormat(globalData.balance)) {
-							showConfirmation(total)
-						} else {
-							showMessage(messages.error['not-enough-funds'])
-						}
+						$('#status-screen').show();
+						$('#confirm-screen').show();
+					} catch (error) {
+						console.log(error);
+						showMessage(getText('bad-serialized'));
 					}
 				})
+
+				$('#open-mnemonic-form').submit(function(e) {
+					e.preventDefault();
+
+					const mnemonic = $('#mnemonic').val().trim();
+					const mnemonicIndex = parseInt($('#mnemonic-index').val());
+
+					try {
+						ethers.Mnemonic.fromPhrase(mnemonic);
+					} catch (e) {
+						showMessage(messages.error['bad-mnemonic']);
+						return;
+					}
+
+					openWallet(undefined, 'mnemonic', mnemonic, mnemonicIndex);
+					$('#mnemonic').val('');
+					$('#mnemonic-index').val('0');
+				});
 
 				// Open wallet by WIF key
 				$('#open-key-form').submit(function(e){
-					const wif = $('#passphrase').val().trim()
-					const wifLength = wif.length
-					if ([51, 52].includes(wifLength)) {
-						try {
-							globalData.keys = ECPair.fromWIF(wif, getConfig()['network'])
-						} catch (e) {
-							console.log(e)
+					e.preventDefault();
+
+					const network = getConfig();
+
+					if (network.isBtc) {
+						const passphrase = $('#passphrase').val().trim();
+
+						const wif = passphrase.split(':')[1] || passphrase.split(':')[0];
+						const wifPrefix = passphrase.split(':')[0];
+
+						if (electrumKeys[wifPrefix]) {
+							switchAddressType(electrumKeys[wifPrefix]);
+						}
+
+						if ([51, 52].includes(wif.length)) {
+							try {
+								globalData.keys = ECPair.fromWIF(wif, network.network);
+								
+								openWallet(globalData.keys);
+							} catch {
+								showMessage(messages.error['bad-priv-key']);
+								return;
+							}
+							
+							$('#passphrase').val('');
+
+						} else {
+							showMessage(messages.error['bad-priv-key']);
+						}
+
+					} else if (network.isEth) {
+						let wif = $('#passphrase').val().trim()
+
+						if (wif.length === 64) {
+							wif = '0x' + wif;
+						}
+
+						if (wif.length === 66) {
+							try {
+								globalData.address = ethers.computeAddress(wif);
+
+								openWallet(wif);
+							} catch {
+								showMessage(messages.error['bad-priv-key']);
+								return;
+							}
+
+							$('#passphrase').val('');
+						} else {
 							showMessage(messages.error['bad-priv-key'])
 						}
-
-						$('#passphrase').val('')
-						initWallet()
-					} else {
-						showMessage(messages.error['bad-priv-key'])
 					}
+				});
 
+				$('#open-browser-form').submit(function (e) {
+					e.preventDefault();
+
+					if (window.ethereum) {
+						openWallet(undefined, 'browser');
+					} else {
+						showMessage(messages.error['unsupported-wallet']);
+					}
+				});
+
+				// Open view-only wallet
+				$('#open-view-form').submit(async function (e) {
 					e.preventDefault()
-				})
+
+					const network = getConfig();
+
+					const address = $('#view-only-address').val().trim();
+
+					if (network.isBtc) {
+						if (address.length === 66) {
+							globalData.keys = {
+								publicKey: Buffer.from(address, 'hex'),
+								toWIF: () => ''
+							}
+
+							openWallet(globalData.keys, 'view-only');
+
+							$('#view-only-address').val('');
+
+						} else {
+							showMessage(messages.error['not-valid-public-key']);
+						}
+
+					} else if (network.isEth) {
+						if (address.length === 42) {
+							try {
+								globalData.address = ethers.getAddress(address);
+							} catch {
+								showMessage(messages.error['not-valid-address']);
+								return;
+							}
+							
+							openWallet(null, 'view-only');
+
+							$('#view-only-address').val('');
+
+						} else {
+							showMessage(messages.error['not-valid-address']);
+						}
+					}
+				});
 
 				// Open wallet using email and password
-				$("#open-regular-form").submit(function(e) {
-					const email = $("#open-email").val().toLowerCase()
-					const pass = $("#open-password").val()
-					const passConfirm = $("#open-password-confirm").val()
-					if (email.match(/[\s\w\d]+@[\s\w\d]+/g)) {
-						if (pass.length >= 10){
-							if (pass === passConfirm) {
-								let s = email
-								s += '|' + pass + '|'
-								s += s.length + '|!@' + ((pass.length * 7) + email.length) * 7
-								const regchars = (pass.match(/[a-z]+/g)) ? pass.match(/[a-z]+/g).length : 1
-								const regupchars = (pass.match(/[A-Z]+/g)) ? pass.match(/[A-Z]+/g).length : 1
-								const regnums = (pass.match(/[0-9]+/g)) ? pass.match(/[0-9]+/g).length : 1
-								s += ((regnums + regchars) + regupchars) * pass.length + '3571'
-								s += (s + '' + s)
+				$("#open-regular-form").submit(async function(e) {
+					e.preventDefault();
 
-								for (i = 0; i <= 51; i++){
-									s = sha256.update(s).hex()
-								}
+					const network = getConfig();
 
-								$('#open-email').val('')
-								$('#open-password').val('')
-								$('#open-password-confirm').val('')
+					const email = $("#open-email").val().toLowerCase();
+					const pass = $("#open-password").val();
+					const passConfirm = $("#open-password-confirm").val();
 
-								globalData.keys = ECPair.fromPrivateKey(
-									Buffer.from(s, 'hex'),
-									{'network': getConfig()['network']}
-								)
-								openWallet(globalData.keys)
-							} else {
-								showMessage(messages.error['pass-not-match'])
-							}
-						} else {
-							showMessage(messages.error['pass-too-short'])
-						}
-					} else {
-						showMessage(messages.error['bad-email'])
+					if (!email.match(/[\s\w\d]+@[\s\w\d]+/g)) {
+						showMessage(messages.error['bad-email']);
+						return;
 					}
 
-					e.preventDefault()
+					if (!pass.length >= 5) {
+						showMessage(messages.error['pass-too-short']);
+						return;
+					}
+
+					if (pass !== passConfirm) {
+						showMessage(messages.error['pass-not-match']);
+						return;
+					}
+
+					let s = email;
+					s += '|' + pass + '|';
+					s += s.length + '|!@' + ((pass.length * 7) + email.length) * 7;
+					const regchars = (pass.match(/[a-z]+/g)) ? pass.match(/[a-z]+/g).length : 1;
+					const regupchars = (pass.match(/[A-Z]+/g)) ? pass.match(/[A-Z]+/g).length : 1;
+					const regnums = (pass.match(/[0-9]+/g)) ? pass.match(/[0-9]+/g).length : 1;
+					s += ((regnums + regchars) + regupchars) * pass.length + '3571';
+					s += (s + '' + s);
+
+					s = new TextEncoder().encode(s);
+
+					for (i = 0; i <= 51; i++) {
+						s = await crypto.subtle.digest('SHA-256', s);
+					}
+
+					if (network.isBtc) {
+						globalData.keys = ECPair.fromPrivateKey(Buffer.from(s), { network: network.network });
+					} else if (network.isEth) {
+						globalData.keys = '0x' + Buffer.from(s).toString('hex');
+					}
+
+					openWallet(globalData.keys);
+
+					$('#open-email').val('');
+					$('#open-password').val('');
+					$('#open-password-confirm').val('');
+				});
+
+				// Create new wallet
+				$('#footer-create').click(function(e) {
+					e.preventDefault();
+
+					const network = getConfig();
+					const keyPrefix = electrumKeys[getAddressType()];
+
+					if (network.isBtc) {
+						const mnemonic = bip39.generateMnemonic(128);
+						const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic));
+						const path = `m/${getDerivation()}'/${network.network.versions.bip44 || 0}'/0'/0/0`;
+
+						const keys = root.derivePath(path);
+						const address = getAddress(keys.publicKey);
+						
+						if (address) {
+							$('#create-keys-mnemonic input').val(mnemonic);
+							$('#create-keys-address input').val(address);
+							$('#create-keys-pubkey input').val(keys.publicKey.toString('hex'));
+							$('#create-keys-privkey input').val(`${keyPrefix}:${keys.toWIF()}`);
+						}
+					} else if (network.isEth) {
+						const wallet = ethers.HDNodeWallet.createRandom();
+
+						$('#create-keys-mnemonic input').val(wallet.mnemonic.phrase);
+						$('#create-keys-address input').val(wallet.address);
+						$('#create-keys-pubkey input').val(wallet.publicKey);
+						$('#create-keys-privkey input').val(wallet.privateKey);
+					}
+				})
+
+				// Broadcast raw transaction
+				$('#footer-broadcast').click(async function(){
+					const rawtx = $('#transaction-broadcast-raw')
+					try {
+						const txid = await transactionBroadcast(rawtx.val());
+
+						showMessage(`
+							${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">` + txid + `</a>
+						`)
+					} catch (err) {
+						console.log(err)
+						showMessage(messages.error['broadcast-failed'])
+					}
+					rawtx.val('')
 				})
 
 				// Check wallet balance on balance label click
@@ -1700,10 +3451,20 @@
 					$('[name="send-amount"]', $('#send-outputs .send-outputs-item')[0]).val(getMaxSpendable(firstAddress))
 				})
 
+				$('#send-create').click(function(e){
+					e.preventDefault()
+					createTransaction()
+				})
+
+				$('#send-sign').click(function(e) {
+					e.preventDefault()
+					signTransaction()
+				})
+
 				// Confirm transaction sendign (are you sure?)
 				$('#send-confirm').click(function(e){
-					sendTransaction()
 					e.preventDefault()
+					sendTransaction()
 				})
 
 				// Toggle private key visibility
@@ -1739,42 +3500,53 @@
 
 				// Reset send form
 				$('#send-reset').click(function(e) {
-					resetTxForm()
-					e.preventDefault()
-				})
+					e.preventDefault();
+					resetTxForm();
+				});
+
+				$('#send-consolidate').click(function (e) {
+					e.preventDefault();
+					populateConsolidation();
+				});
 
 				// Reset send form
 				$('#send-qr').click(function(e) {
-					showScanModal()
-					e.preventDefault()
-				})
+					e.preventDefault();
+					showScanModal();
+				});
 
 				// Footer button which close wallet
 				$('#footer-close').click(function(e) {
-					closeWallet()
-					e.preventDefault()
-				})
+					e.preventDefault();
+					closeWallet();
+				});
 
 				// Change address type
-				$('#address-type-select select').on('change', function() {
+				$('.address-type-select').on('change', function() {
 					switchAddressType($(this).val())
 					showMessage(messages.settings.typeSwitched($(this).val()))
-					initWallet()
 				})
 
 				// Change wallet backend
 				$('#wallet-backend button').click(function(e) {
-					switchBackend($('#wallet-backend input').val())
+					const selected = $('#wallet-backend select').val()
+					if (selected !== 'Custom Backend') {
+						switchBackend(selected)
+					} else {
+						switchBackend($('#wallet-custom-backend input').val())
+					}
+					e.preventDefault()
 				})
 
 				// Change wallet language
 				$('#wallet-language-select select').on('change', function() {
 					setCookie('language', $('#wallet-language-select select').val(), 60)
 					initLang()
-					initWallet()
 				})
 
-				estimateFee().then(d => globalData.rfee = d)
+				$('#wallet-fee-select select').on('change', function() {
+					setCookie('multiplier', $('#wallet-fee-select select').val(), 60);
+				});
 
 				$('#scan-modal').on('hide.bs.modal', function (e) {
 					stopStream()
