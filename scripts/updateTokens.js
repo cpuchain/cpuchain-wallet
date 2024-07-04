@@ -10,6 +10,7 @@ const COINGECKO_LISTS = [
   'https://tokens.coingecko.com/polygon-pos/all.json',
   'https://tokens.coingecko.com/avalanche/all.json',
   'https://tokens.coingecko.com/xdai/all.json',
+  'https://tokens.coingecko.com/base/all.json',
 ];
 
 const COINGECKO_API_LINKS = [
