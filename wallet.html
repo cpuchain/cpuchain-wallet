@@ -10327,6 +10327,9 @@ var o=r(6420),a=o.Buffer;function n(e,t){for(var r in e)t[r]=e[r]}function i(e,t
 		'return-data': 'OP_RETURN data (optional)',
         'input-data': 'Input data (optional)',
 		'fee': 'Fee',
+		'fast': 'Fast',
+		'medium': 'Medium',
+		'slow': 'Slow',
 		'recommended': 'recommended',
 		'loading': 'Loading...',
 		'loading-balance': 'Loading Balance...',
@@ -11253,7 +11256,7 @@ const embedded = {
 									<a class="nav-link tab-link" data-tab-name="wallet-sign" data-tab-family="wallet-block" href="#" tkey="sign"></a>
 								</li>
 								<li class="nav-item mr-2">
-									<a id="history-link" class="nav-link" target="_blank" rel="noreferrer" href="#" tkey="history"></a>
+									<a id="history-link" class="nav-link" target="_blank" rel="noreferrer nofollow" href="#" tkey="history"></a>
 								</li>
 								<li class="nav-item">
 									<a class="nav-link tab-link" data-tab-name="wallet-keys" data-tab-family="wallet-block" href="#" tkey="keys"></a>
@@ -11588,7 +11591,7 @@ const embedded = {
 		<!-- Footer :3 -->
 		<footer class="mb-3">
 			<div class="container text-center">
-				Made with <span class="fa-solid fa-heart text-danger"></span> by <a target="_blank" href="https://github.com/cpuchain/cpuchain-wallet">CPUchain Community</a>
+				Made with <span class="fa-solid fa-heart text-danger"></span> by <a href="https://github.com/cpuchain/cpuchain-wallet" target="_blank" rel="noreferrer nofollow">CPUchain Community</a>
 			</div>
 		</footer>
 
@@ -12175,7 +12178,7 @@ const embedded = {
 
 					$('#wallet-fee-select select').append($('<option>', {
 						'value': key,
-						'text': key
+						'text': getText(key),
 					}))
 				}
 
@@ -13066,7 +13069,7 @@ const embedded = {
 				$('#wallet-keys-script input').val(redeem);
 				
 				$('#wallet-address').html(address);
-				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`)
+				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`);
 				showQrAddress(getConfig()['uri'] + address)
 			}
 
@@ -14039,7 +14042,7 @@ const embedded = {
 								const txid = await transactionBroadcast(tx.toHex());
 
 								txidContext.push(`
-								<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
+								<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank" rel="noreferrer nofollow">
 									${txid}
 								</a>
 								`)
@@ -14060,7 +14063,7 @@ const embedded = {
 					}
 
 					$('#status-screen span').html(`
-						<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
+						<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank" rel="noreferrer nofollow">
 							${txid}
 						</a> 
 					`);
@@ -14453,7 +14456,7 @@ const embedded = {
 						const txid = await transactionBroadcast(rawtx.val());
 
 						showMessage(`
-							${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">` + txid + `</a>
+							${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank" rel="noreferrer nofollow" >` + txid + `</a>
 						`)
 					} catch (err) {
 						console.log(err)

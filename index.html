@@ -271,7 +271,7 @@
 									<a class="nav-link tab-link" data-tab-name="wallet-sign" data-tab-family="wallet-block" href="#" tkey="sign"></a>
 								</li>
 								<li class="nav-item mr-2">
-									<a id="history-link" class="nav-link" target="_blank" rel="noreferrer" href="#" tkey="history"></a>
+									<a id="history-link" class="nav-link" target="_blank" rel="noreferrer nofollow" href="#" tkey="history"></a>
 								</li>
 								<li class="nav-item">
 									<a class="nav-link tab-link" data-tab-name="wallet-keys" data-tab-family="wallet-block" href="#" tkey="keys"></a>
@@ -606,7 +606,7 @@
 		<!-- Footer :3 -->
 		<footer class="mb-3">
 			<div class="container text-center">
-				Made with <span class="fa-solid fa-heart text-danger"></span> by <a target="_blank" href="https://github.com/cpuchain/cpuchain-wallet">CPUchain Community</a>
+				Made with <span class="fa-solid fa-heart text-danger"></span> by <a href="https://github.com/cpuchain/cpuchain-wallet" target="_blank" rel="noreferrer nofollow">CPUchain Community</a>
 			</div>
 		</footer>
 
@@ -1193,7 +1193,7 @@
 
 					$('#wallet-fee-select select').append($('<option>', {
 						'value': key,
-						'text': key
+						'text': getText(key),
 					}))
 				}
 
@@ -2084,7 +2084,7 @@
 				$('#wallet-keys-script input').val(redeem);
 				
 				$('#wallet-address').html(address);
-				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`)
+				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`);
 				showQrAddress(getConfig()['uri'] + address)
 			}
 
@@ -3057,7 +3057,7 @@
 								const txid = await transactionBroadcast(tx.toHex());
 
 								txidContext.push(`
-								<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
+								<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank" rel="noreferrer nofollow">
 									${txid}
 								</a>
 								`)
@@ -3078,7 +3078,7 @@
 					}
 
 					$('#status-screen span').html(`
-						<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">
+						<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank" rel="noreferrer nofollow">
 							${txid}
 						</a> 
 					`);
@@ -3471,7 +3471,7 @@
 						const txid = await transactionBroadcast(rawtx.val());
 
 						showMessage(`
-							${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank">` + txid + `</a>
+							${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank" rel="noreferrer nofollow" >` + txid + `</a>
 						`)
 					} catch (err) {
 						console.log(err)
