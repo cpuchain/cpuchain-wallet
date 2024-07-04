@@ -1269,20 +1269,26 @@
 			}
 
 			function displayBackends() {
-				const network = getConfig()
-				const currentBackend = getBackend()
-				$('.wallet-backend-list').remove()
+				const network = getConfig();
+				const currentBackend = getBackend();
+				$('.wallet-backend-list').remove();
+				$('#wallet-backend-selected').append(`
+					<option val="${currentBackend}" class="wallet-backend-list">${currentBackend}</option>
+				`);
 				network.nodes.forEach(r => {
+					if (r === currentBackend) {
+						return;
+					}
 					$('#wallet-backend-selected').append(`
-							<option val="${r}" class="wallet-backend-list" ${r === currentBackend ? 'selected' : ''}>${r}</option>
-					`)
+							<option val="${r}" class="wallet-backend-list">${r}</option>
+					`);
 				})
 				$('#wallet-backend-selected').append(`
 						<option val="Offline" class="wallet-backend-list" ${'Offline (For signing)' === currentBackend ? 'selected' : ''}>Offline (For signing)</option>
-				`)
+				`);
 				$('#wallet-backend-selected').append(`
 						<option val="custom-backend" class="wallet-backend-list">Custom Backend</option>
-				`)
+				`);
 			}
 
 			const electrumKeys = {
