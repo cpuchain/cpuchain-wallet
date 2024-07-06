@@ -20,6 +20,7 @@ var walletLanguages = {
 		'password-confirm': 'Confirm password',
 		'generate-question': 'Still don\'t have wallet?',
 		'generate-it': '<a href="#/create">Generate</a> it!',
+		'generate-mnemonic': '<b>Notice:</b> Web Wallet will derive addresses following the <a href="https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki" target="_blank" rel="noreferrer">BIP-44</a> standard, check <a href="https://iancoleman.io/bip39/" target="_blank" rel="noreferrer">https://iancoleman.io/bip39/</a> for available addresses.',
 		'address-key': 'Wallet Address',
 		'created-public-key': 'Wallet Public Key (Not Address!)',
 		'wif-key': 'Wallet Private key',

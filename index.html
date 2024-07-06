@@ -246,7 +246,7 @@
 								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-mnemonic">
-								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
+								<span tkey="generate-mnemonic"></span>
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-key">
 								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
@@ -618,7 +618,6 @@
 			// so that we could sign transactions with large amount of coins like Dogecoin
 			const { coininfo, bip32, bip39, Buffer, ECPair } = bitcoin;
 			const TX_CHUNK_SIZE = 10;
-			const NETWORK_ORDER = ['CPU', 'ETH'];
 			const MEMPOOL_INSTANCES = ['mempool', 'litecoinspace'];
 
 			BigInt.prototype["toJSON"] = function () {
@@ -1215,7 +1214,7 @@
 			function getConfig() {
 				let network = readCookie('network')
 				if (!network || !networkConfigs[network]) {
-					setCookie('network', NETWORK_ORDER[0], 60)
+					setCookie('network', Object.keys(networkConfigs)[0], 60)
 					network = readCookie('network')
 				}
 
@@ -2330,7 +2329,7 @@
 
 				let inputBytes = 0
 				// Add change address bytes
-				let outputBytes = getBytes(getScriptType(getAddressScript(changeAddress)), false)
+				let outputBytes = 0
 
 				const psbt = new bitcoin.Psbt({ network })
 
@@ -2551,8 +2550,7 @@
 				
 				const inputAmounts = inputs.reduce((acc, curr) => acc + Number(curr.value), 0);
 				const inputBytes = getBytes(getAddressType()) * inputs.length;
-				const outputBytes = getBytes(getAddressType(), false)
-				    + getBytes(getScriptType(getAddressScript(changeAddress)), false);
+				const outputBytes = getBytes(getScriptType(getAddressScript(changeAddress)), false);
 
 				const vBytes = 10 + inputBytes + outputBytes;
 				const fees = feePerByte * vBytes;

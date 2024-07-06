@@ -10285,6 +10285,7 @@ var o=r(6420),a=o.Buffer;function n(e,t){for(var r in e)t[r]=e[r]}function i(e,t
 		'password-confirm': 'Confirm password',
 		'generate-question': 'Still don\'t have wallet?',
 		'generate-it': '<a href="#/create">Generate</a> it!',
+		'generate-mnemonic': '<b>Notice:</b> Web Wallet will derive addresses following the <a href="https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki" target="_blank" rel="noreferrer">BIP-44</a> standard, check <a href="https://iancoleman.io/bip39/" target="_blank" rel="noreferrer">https://iancoleman.io/bip39/</a> for available addresses.',
 		'address-key': 'Wallet Address',
 		'created-public-key': 'Wallet Public Key (Not Address!)',
 		'wif-key': 'Wallet Private key',
@@ -11231,7 +11232,7 @@ const embedded = {
 								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-mnemonic">
-								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
+								<span tkey="generate-mnemonic"></span>
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-key">
 								<span tkey="generate-question"></span> <span tkey="generate-it"></span>
@@ -11603,7 +11604,6 @@ const embedded = {
 			// so that we could sign transactions with large amount of coins like Dogecoin
 			const { coininfo, bip32, bip39, Buffer, ECPair } = bitcoin;
 			const TX_CHUNK_SIZE = 10;
-			const NETWORK_ORDER = ['CPU', 'ETH'];
 			const MEMPOOL_INSTANCES = ['mempool', 'litecoinspace'];
 
 			BigInt.prototype["toJSON"] = function () {
@@ -12200,7 +12200,7 @@ const embedded = {
 			function getConfig() {
 				let network = readCookie('network')
 				if (!network || !networkConfigs[network]) {
-					setCookie('network', NETWORK_ORDER[0], 60)
+					setCookie('network', Object.keys(networkConfigs)[0], 60)
 					network = readCookie('network')
 				}
 
@@ -13315,7 +13315,7 @@ const embedded = {
 
 				let inputBytes = 0
 				// Add change address bytes
-				let outputBytes = getBytes(getScriptType(getAddressScript(changeAddress)), false)
+				let outputBytes = 0
 
 				const psbt = new bitcoin.Psbt({ network })
 
@@ -13536,8 +13536,7 @@ const embedded = {
 				
 				const inputAmounts = inputs.reduce((acc, curr) => acc + Number(curr.value), 0);
 				const inputBytes = getBytes(getAddressType()) * inputs.length;
-				const outputBytes = getBytes(getAddressType(), false)
-				    + getBytes(getScriptType(getAddressScript(changeAddress)), false);
+				const outputBytes = getBytes(getScriptType(getAddressScript(changeAddress)), false);
 
 				const vBytes = 10 + inputBytes + outputBytes;
 				const fees = feePerByte * vBytes;
