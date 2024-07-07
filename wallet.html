@@ -11600,6 +11600,7 @@ const embedded = {
 
 		<!-- All magic is here :D -->
 		<script>
+			/*global $, bitcoin, ethers, ERC20ABI, MulticallABI, walletLanguages, embedded, tokens, jsQR*/
 			// todo: replace bitcoinjs with @scure/btc-signer which provides similar interface with bitcoinjs but supports bigint
 			// so that we could sign transactions with large amount of coins like Dogecoin
 			const { coininfo, bip32, bip39, Buffer, ECPair } = bitcoin;
@@ -11614,7 +11615,6 @@ const embedded = {
 
 			// Config
 			let stream = undefined
-			let walletTimer = false
 			const walletVersion = '0.5'
 			const networkConfigs = {
 				CPU: {
@@ -12110,22 +12110,24 @@ const embedded = {
 					let text = $(this).attr('tkey');
 
 					switch (text) {
-						case 'view-key':
-							if (network.isBtc) {
-								text = 'created-public-key';
-								break;
-							} else if (network.isEth) {
-								text = 'address-key';
-								break;
-							}
-						case 'optional-data':
-							if (network.isBtc) {
-								text = 'return-data';
-								break;
-							} else if (network.isEth) {
-								text = 'input-data';
-								break;
-							}
+					case 'view-key':
+						if (network.isBtc) {
+							text = 'created-public-key';
+							break;
+						} else if (network.isEth) {
+							text = 'address-key';
+							break;
+						}
+						break;
+					case 'optional-data':
+						if (network.isBtc) {
+							text = 'return-data';
+							break;
+						} else if (network.isEth) {
+							text = 'input-data';
+							break;
+						}
+						break;
 					}
 					
 					if (['INPUT', 'TEXTAREA'].indexOf($(this).prop('tagName')) >= 0) {
@@ -12150,8 +12152,9 @@ const embedded = {
 					language = readCookie('language')
 				}
 
-				$('#wallet-language-select select').empty()
-				for (key in walletLanguages) {
+				$('#wallet-language-select select').empty();
+
+				for (const key in walletLanguages) {
 					$('#wallet-language-select select').append($('<option>', {
 						'value': key,
 						'text': walletLanguages[key]['lang-alias']
@@ -12169,9 +12172,10 @@ const embedded = {
 			function initFeeMultiplier() {
 				const multiplier = getFeeMultiplier();
 				let selectedKey;
+				
+				$('#wallet-fee-select select').empty();
 
-				$('#wallet-fee-select select').empty()
-				for (key in feeMultipliers) {					
+				for (const key in feeMultipliers) {					
 					if (multiplier === feeMultipliers[key]) {
 						selectedKey = key;
 					}
@@ -12377,10 +12381,12 @@ const embedded = {
 				return null;
 			}
 
+			// eslint-disable-next-line no-unused-vars
 			function deleteCookie(name) {
 				document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 			}
 
+			// eslint-disable-next-line no-unused-vars
 			function resetCookie() {
 				document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
 			}
@@ -12406,36 +12412,35 @@ const embedded = {
 					}
 
 					switch(pageName) {
-						// Home page ¯\_(ツ)_/¯
-						case 'homepage':
-							setHomeTitle()
-							break
+					// Home page ¯\_(ツ)_/¯
+					case 'homepage':
+						setHomeTitle()
+						break
 
-						case 'create':
-							setTitle(getText('create-wallet'))
-							break
+					case 'create':
+						setTitle(getText('create-wallet'))
+						break
 
-						case 'broadcast':
-							setTitle(getText('broadcast-transaction'))
-							break
+					case 'broadcast':
+						setTitle(getText('broadcast-transaction'))
+						break
 
-						case 'settings':
-							setTitle(getText('wallet-settings'))
-							break
+					case 'settings':
+						setTitle(getText('wallet-settings'))
+						break
 
 						// Swith network
-						case 'network':
-							const network = urlParams[2]
-							if (network) {
-								switchConfig(network)
-							}
+					case 'network':
+						if (urlParams[2]) {
+							switchConfig(urlParams[2])
+						}
 
-							break
+						break
 
-						default:
-							switchPage()
+					default:
+						switchPage()
 
-							break
+						break
 					}
 				}
 			}
@@ -12503,16 +12508,16 @@ const embedded = {
 
 			function getBytes(type, isInput = true) {
 				switch (type) {
-					case 'taproot':
-						return isInput ? 58 : 43;
-					case 'bech32':
-						return isInput ? 68 : 31;
-					case 'segwit':
-						return isInput ? 91 : 32;
-					case 'legacy':
-						return isInput ? 148 : 34;
-					default:
-						return isInput ? 392 : 34;
+				case 'taproot':
+					return isInput ? 58 : 43;
+				case 'bech32':
+					return isInput ? 68 : 31;
+				case 'segwit':
+					return isInput ? 91 : 32;
+				case 'legacy':
+					return isInput ? 148 : 34;
+				default:
+					return isInput ? 392 : 34;
 				}
 			}
 
@@ -12572,18 +12577,18 @@ const embedded = {
 				const addrType = getAddressType();
 
 				switch (addrType) {
-					// https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
-					case 'taproot':
-						return 86;
+				// https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
+				case 'taproot':
+					return 86;
 					// https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
-					case 'bech32':
-						return 84;
+				case 'bech32':
+					return 84;
 					// https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
-					case 'segwit':
-						return 49;
+				case 'segwit':
+					return 49;
 					// https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
-					default:
-						return 44;
+				default:
+					return 44;
 				}
 			}
 
@@ -13671,7 +13676,7 @@ const embedded = {
 
 				const network = getConfig();
 
-				const { provider, signer, Multicall } = globalData;
+				const { provider, signer } = globalData;
 
 				let tokenAddress, toAddress;
 
@@ -13702,12 +13707,12 @@ const embedded = {
 				};
 
 				const gasPrice = txData.maxFeePerGas
-				    ? txData.maxFeePerGas + txData.maxPriorityFeePerGas
+					? txData.maxFeePerGas + txData.maxPriorityFeePerGas
 					: txData.gasPrice
 				
 				let stringValue = tokenAddress
-				    ? $('#send-token-outputs input[name="send-amount"]').last().val()
-				    : $('#send-outputs input[name="send-amount"]').last().val();
+					? $('#send-token-outputs input[name="send-amount"]').last().val()
+					: $('#send-outputs input[name="send-amount"]').last().val();
 
 				if (tokenAddress) {
 					const [nonce, symbol, decimals, tokenBalance] = (await Promise.all([
@@ -13948,9 +13953,9 @@ const embedded = {
 					const network = getConfig();
 
 					const serailizedTx = network.isBtc
-					    ? globalData.tx.psbt.toHex()
+						? globalData.tx.psbt.toHex()
 						: network.isEth
-						    ? serializeTransaction(globalData.tx)
+							? serializeTransaction(globalData.tx)
 							: '';
 
 					$('#status-screen .extra-info').html(`
@@ -13988,9 +13993,9 @@ const embedded = {
 					const network = getConfig();
 
 					const signedTx = network.isBtc
-					    ? signPsbt(globalData.tx.psbt).toHex()
+						? signPsbt(globalData.tx.psbt).toHex()
 						: network.isEth
-						    ? await globalData.signer.signTransaction(globalData.tx)
+							? await globalData.signer.signTransaction(globalData.tx)
 							: '';
 
 					$('#status-screen .extra-info').html(`
@@ -14215,11 +14220,11 @@ const embedded = {
 							formattedTx = globalData.tx
 
 							const gasPrice = formattedTx.maxFeePerGas
-							    ? BigInt(formattedTx.maxFeePerGas) + BigInt(formattedTx.maxPriorityFeePerGas)
+								? BigInt(formattedTx.maxFeePerGas) + BigInt(formattedTx.maxPriorityFeePerGas)
 								: BigInt(formattedTx.gasPrice);
 
 							formattedValue = (formattedTx.stringValue || `${ethers.formatUnits(formattedTx.value, network.decimals)}  ${network.ticker}`)
-							    + ` (Fees: ${ethers.formatUnits(gasPrice * BigInt(formattedTx.gasLimit), network.decimals)} ${network.ticker})`;
+								+ ` (Fees: ${ethers.formatUnits(gasPrice * BigInt(formattedTx.gasLimit), network.decimals)} ${network.ticker})`;
 						}
 
 						$('#status-screen .extra-info').html(`
@@ -14400,7 +14405,7 @@ const embedded = {
 
 					s = new TextEncoder().encode(s);
 
-					for (i = 0; i <= 51; i++) {
+					for (let i = 0; i <= 51; i++) {
 						s = await crypto.subtle.digest('SHA-256', s);
 					}
 
@@ -14576,7 +14581,7 @@ const embedded = {
 					setCookie('multiplier', $('#wallet-fee-select select').val(), 60);
 				});
 
-				$('#scan-modal').on('hide.bs.modal', function (e) {
+				$('#scan-modal').on('hide.bs.modal', function () {
 					stopStream()
 				})
 			})

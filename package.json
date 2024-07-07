@@ -6,6 +6,7 @@
   "author": "CPUchain <info@cpuchain.org>",
   "license": "MIT",
   "scripts": {
+    "lint": "eslint index.html",
     "build:bitcoin": "webpack",
     "build": "html-inline-external --src index.html --dest wallet.html"
   },
@@ -19,6 +20,8 @@
     "coininfo": "^5.2.1",
     "ecpair": "^2.1.0",
     "esbuild-loader": "^4.1.0",
+    "eslint": "8.57.0",
+    "eslint-plugin-html": "^8.1.1",
     "ethers": "^6.13.1",
     "node-polyfill-webpack-plugin": "^4.0.0",
     "webpack": "^5.91.0",
