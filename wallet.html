@@ -12816,7 +12816,7 @@ const embedded = {
 				const networkConfig = getConfig();
 
 				if (backend === 'Offline (For signing)') {
-					const staticNetwork = new ethers.Network('mainnet', BigInt(readCookie('network')));
+					const staticNetwork = new ethers.Network('mainnet', BigInt(networkConfig.chainId));
 
 					const provider = new ethers.JsonRpcProvider('http://localhost:8545', staticNetwork, {
 						staticNetwork,
@@ -12847,6 +12847,8 @@ const embedded = {
 					staticNetwork,
 					pollingInterval: 10000,
 				});
+
+				networkConfig.chainId = Number(staticNetwork.chainId);
 
 				globalData.chainId = Number(staticNetwork.chainId);
 				globalData.provider = provider;
