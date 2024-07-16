@@ -629,7 +629,7 @@
 
 			// Config
 			let stream = undefined
-			const walletVersion = '0.5'
+			const walletVersion = '1.0'
 			const networkConfigs = {
 				CPU: {
 					uri: 'cpuchain:',
@@ -2335,7 +2335,6 @@
 				let outputAmounts = 0
 
 				let inputBytes = 0
-				// Add change address bytes
 				let outputBytes = 0
 
 				const psbt = new bitcoin.Psbt({ network })
@@ -2425,7 +2424,7 @@
 					psbt.addOutput(output)
 				})
 				
-				const vBytes = 10 + inputBytes + outputBytes
+				let vBytes = 10 + inputBytes + outputBytes
 
 				const fees = vBytes * feePerByte
 
@@ -2442,6 +2441,8 @@
 
 					outputAmounts += output.value
 					outputBytes += output.bytes = getBytes(getScriptType(getAddressScript(output.address)), false)
+					vBytes += output.bytes
+
 					outputs.push(output)
 					psbt.addOutput(output)
 				}
