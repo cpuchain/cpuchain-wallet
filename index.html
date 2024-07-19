@@ -16,7 +16,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js" integrity="sha384-xeyyvbIlX+FahWHIZR6gjoC4A1i44cTBxZ330euRbtiXZwfcVDWVeOuJ4sGx8R2d" crossorigin="anonymous"></script>
 		<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
-		<script src="https://unpkg.com/btc-signer@1.0.0/lib/btcSigner.umd.min.js" integrity="sha384-V9Yg3Wk6JHtrkGOtefFGRj7oxzvkxkoAgDf3ZHlhYq/0fjVN/EiL4yvtdvqiaYdi" crossorigin="anonymous"></script>
+		<script src="https://unpkg.com/btc-signer@1.0.1/lib/btcSigner.umd.min.js" integrity="sha384-7mG/wqBIVTCyIvFavUfZ72dfkX2RCZ2ZZrGCecxOOH7aK0ehj1Nf36CA5AJq0vch" crossorigin="anonymous"></script>
 		<script src="multilang.js"></script>
 		<script src="abi.js"></script>
 		<script src="logos.js"></script>
@@ -1851,13 +1851,10 @@
 						{
 							...walletConfig,
 							mnemonic,
+							mnemonicIndex,
 						},
 						true
 					);
-
-					if (mnemonicIndex) {
-						signer.setKey(mnemonicIndex);
-					}
 
 					globalData.signer = signer;
 	
@@ -2774,7 +2771,7 @@
 					e.preventDefault();
 
 					const mnemonic = $('#mnemonic').val().trim();
-					const mnemonicIndex = parseInt($('#mnemonic-index').val());
+					const mnemonicIndex = parseInt($('#mnemonic-index').val()) || 0;
 
 					try {
 						ethers.Mnemonic.fromPhrase(mnemonic);
