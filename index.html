@@ -16,7 +16,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js" integrity="sha384-xeyyvbIlX+FahWHIZR6gjoC4A1i44cTBxZ330euRbtiXZwfcVDWVeOuJ4sGx8R2d" crossorigin="anonymous"></script>
 		<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
-		<script src="bitcoinjs.min.js"></script>
+		<script src="https://unpkg.com/btc-signer@1.0.0/lib/btcSigner.umd.min.js" integrity="sha384-V9Yg3Wk6JHtrkGOtefFGRj7oxzvkxkoAgDf3ZHlhYq/0fjVN/EiL4yvtdvqiaYdi" crossorigin="anonymous"></script>
 		<script src="multilang.js"></script>
 		<script src="abi.js"></script>
 		<script src="logos.js"></script>
@@ -549,7 +549,7 @@
 		</div>
 
 		<div id="send-modal" class="modal" tabindex="-1" role="dialog">
-			<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-dialog modal-xl" role="document">
 				<div class="modal-content">
 					<div class="modal-header">
 						<h5 id="send-title" class="modal-title"></h5>
@@ -614,11 +614,10 @@
 
 		<!-- All magic is here :D -->
 		<script>
-			/*global $, bitcoin, ethers, ERC20ABI, MulticallABI, walletLanguages, embedded, tokens, jsQR*/
+			/*global $, btcSigner, ethers, ERC20ABI, MulticallABI, walletLanguages, embedded, tokens, jsQR*/
 			// todo: replace bitcoinjs with @scure/btc-signer which provides similar interface with bitcoinjs but supports bigint
 			// so that we could sign transactions with large amount of coins like Dogecoin
-			const { coininfo, bip32, bip39, Buffer, ECPair } = bitcoin;
-			const TX_CHUNK_SIZE = 10;
+			const { coininfo, Buffer, bitcoin, formatCoins, parseCoins, electrumKeys } = btcSigner;
 			const MEMPOOL_INSTANCES = ['mempool', 'litecoinspace'];
 
 			BigInt.prototype["toJSON"] = function () {
@@ -629,7 +628,7 @@
 
 			// Config
 			let stream = undefined
-			const walletVersion = '1.0'
+			const walletVersion = '1.1'
 			const networkConfigs = {
 				CPU: {
 					uri: 'cpuchain:',
@@ -637,7 +636,7 @@
 					name: 'CPUchain (CPU)',
 					logo: 'cpuchain.png',
 					nodes: [
-						'https://blockbook.cpuchain.org/api/v2',
+						'https://blockbook.cpuchain.org',
 					],
 					ticker: 'CPU',
 					decimals: 8,
@@ -664,8 +663,8 @@
 					name: 'Bitcoin (BTC)',
 					logo: 'bitcoin.png',
 					nodes: [
-						'https://mempool.space/api',
-						'https://mempool.emzy.de/api',
+						'https://mempool.space',
+						'https://mempool.emzy.de',
 					],
 					ticker: 'BTC',
 					decimals: 8,
@@ -684,7 +683,7 @@
 					name: 'Litecoin (LTC)',
 					logo: 'litecoin.png',
 					nodes: [
-						'https://litecoinspace.org/api',
+						'https://litecoinspace.org',
 					],
 					ticker: 'LTC',
 					decimals: 8,
@@ -899,7 +898,7 @@
 					name: 'CPUchain Testnet (CPU)',
 					logo: 'cpuchain.png',
 					nodes: [
-						'https://testnet-blockbook.cpuchain.org/api/v2'
+						'https://testnet-blockbook.cpuchain.org'
 					],
 					ticker: 'CPU',
 					slip44: 363,
@@ -920,17 +919,37 @@
 				},
 				TBTC: {
 					uri: 'bitcoin:',
-					title: 'Bitcoin Testnet Wallet',
+					title: 'Bitcoin Testnet3 Wallet',
 					name: 'Bitcoin Testnet3 (BTC)',
 					logo: 'bitcoin.png',
 					nodes: [
-						'https://mempool.space/testnet/api',
-						'https://mempool.emzy.de/testnet/api',
+						'https://mempool.space/testnet',
+						'https://mempool.emzy.de/testnet',
 					],
 					ticker: 'BTC',
 					decimals: 8,
 					fee: 0.00001,
 					explorer: 'https://mempool.space/testnet',
+					network: {
+						...bitcoin.networks.testnet,
+						versions: {
+							bip44: 1
+						}
+					}
+				},
+				TBTC4: {
+					uri: 'bitcoin:',
+					title: 'Bitcoin Testnet4 Wallet',
+					name: 'Bitcoin Testnet4 (BTC)',
+					logo: 'bitcoin.png',
+					nodes: [
+						'https://mempool.space/testnet4',
+						'https://mempool.emzy.de/testnet4',
+					],
+					ticker: 'BTC',
+					decimals: 8,
+					fee: 0.00001,
+					explorer: 'https://mempool.space/testnet4',
 					network: {
 						...bitcoin.networks.testnet,
 						versions: {
@@ -1007,9 +1026,8 @@
 			const cookieValue = {};
 
 			const globalData = {
+				cachedBalance: null,
 				balance: 0,
-				coinbase: 0,
-				keys: null,
 				address: null,
 				provider: null,
 				browserProvider: null,
@@ -1017,13 +1035,11 @@
 				Multicall: null,
 				blockNumber: null,
 				chainId: null,
-				rfee: getConfig()['fee'],
 				fees: {
 					gasPrice: null,
 					maxFeePerGas: null,
 					maxPriorityFeePerGas: null,
 				},
-				utxos: [],
 				tx: null,
 				walletInterval: null,
 				tokenTable: null,
@@ -1031,13 +1047,11 @@
 					this.tx = null;
 				},
 				clear: function() {
+					this.cachedBalance = null;
 					this.balance = 0;
-					this.coinbase = 0;
-					this.keys = null;
 					this.address = null;
 					this.browserProvider = null;
 					this.signer = null;
-					this.utxos = [];
 					if (this.walletInterval) {
 						clearInterval(this.walletInterval);
 						this.walletInterval = null;
@@ -1052,7 +1066,6 @@
 					this.Multicall = null;
 					this.blockNumber = null;
 					this.chainId = null;
-					this.rfee = getConfig()['fee'];
 					this.fees = {
 						gasPrice: null,
 						maxFeePerGas: null,
@@ -1294,15 +1307,13 @@
 				`);
 			}
 
-			const electrumKeys = {
-				taproot: 'p2tr',
-				bech32: 'p2wpkh',
-				segwit: 'p2wpkh-p2sh',
-				legacy: 'p2pkh',
-				p2tr: 'taproot',
-				p2wpkh: 'bech32',
-				'p2wpkh-p2sh': 'segwit',
-				p2pkh: 'legacy',
+			function initVersion() {
+				const version = readCookie('version')
+				if (!version || Number(version) !== Number(walletVersion)) {
+					resetCookie();
+					setCookie('version', walletVersion, 60);
+				}
+				return readCookie('version');
 			}
 
 			const feeMultipliers = {
@@ -1402,7 +1413,12 @@
 
 			// eslint-disable-next-line no-unused-vars
 			function resetCookie() {
-				document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
+				try {
+					document.cookie.split(";").forEach(function(c) {
+						document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+					});
+				// eslint-disable-next-line no-empty
+				} catch {}
 			}
 
 			// SPA router function
@@ -1475,6 +1491,7 @@
 				document.title = `${title} | ${getConfig()['title']}`;
 			}
 
+			// eslint-disable-next-line no-unused-vars
 			function sleep(ms = 0) {
 				return new Promise((resolve) => setTimeout(resolve, ms))
 			}
@@ -1483,68 +1500,12 @@
 				return [...Array(Math.ceil(arr.length / size))].map((v, i) => arr.slice(size * i, size + size * i))
 			}
 
-			function checkHex(hexStr) {
-				try {
-					if (hexStr.slice(0, 2) !== '0x') {
-						return false
-					}
-
-					BigInt(hexStr)
-					return true
-				} catch {
-					return false
-				}
-			}
-
-			function getScriptType(script) {
-				if (script[0] === bitcoin.opcodes.OP_1 && script[1] === 32) {
-					return 'taproot'
-				}
-
-				if (script[0] == bitcoin.opcodes.OP_0 && script[1] == 20) {
-					return 'bech32'
-				}
-
-				if (script[0] == bitcoin.opcodes.OP_HASH160 && script[1] == 20) {
-					return 'segwit'
-				}
-
-				if (
-					script[0] == bitcoin.opcodes.OP_DUP &&
-					script[1] == bitcoin.opcodes.OP_HASH160 &&
-					script[2] == 20
-				) {
-					return 'legacy'
-				}
-
-				return 'unknown'
-			}
-
-			function getBytes(type, isInput = true) {
-				switch (type) {
-				case 'taproot':
-					return isInput ? 58 : 43;
-				case 'bech32':
-					return isInput ? 68 : 31;
-				case 'segwit':
-					return isInput ? 91 : 32;
-				case 'legacy':
-					return isInput ? 148 : 34;
-				default:
-					return isInput ? 392 : 34;
-				}
-			}
-
-			function getAddressScript(address) {
-				return bitcoin.address.toOutputScript(address, getConfig()['network'])
-			}
-
 			function validateAddress(address) {
 				try {
 					const network = getConfig();
 					
 					if (network.isBtc) {
-						getAddressScript(address);
+						bitcoin.address.toOutputScript(address, network.network);
 					} else if (network.isEth) {
 						ethers.getAddress(address);
 					}
@@ -1552,69 +1513,6 @@
 					return true
 				} catch {
 					return false
-				}
-			}
-
-			function getAddress(pubkey) {
-				const network = getConfig()['network']
-				const addrType = getAddressType()
-
-				if (addrType === 'taproot') {
-					const internalPubkey = pubkey.slice(1, 33)
-					return bitcoin.payments.p2tr({
-						internalPubkey,
-						network
-					}).address
-				} else if (addrType === 'bech32') {
-					return bitcoin.payments.p2wpkh({
-						pubkey,
-						network
-					}).address
-				} else if (addrType === 'segwit') {
-					const redeem = bitcoin.payments.p2wpkh({
-						pubkey,
-						network
-					})
-					return bitcoin.payments.p2sh({
-						redeem,
-						network
-					}).address
-				} else if (addrType === 'legacy') {
-					return bitcoin.payments.p2pkh({
-						pubkey,
-						network
-					}).address
-				}
-			}
-
-			function getDerivation() {
-				const addrType = getAddressType();
-
-				switch (addrType) {
-				// https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
-				case 'taproot':
-					return 86;
-					// https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
-				case 'bech32':
-					return 84;
-					// https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
-				case 'segwit':
-					return 49;
-					// https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
-				default:
-					return 44;
-				}
-			}
-
-			// Convert satoshis to readable amount
-			function amountFormat(amount, invert = false) {
-				const decimals = getConfig()['decimals']
-				if (!invert) {
-					return ethers.formatUnits(amount, decimals)
-				} else {
-					// Fixes 0.00013 * 1000 => 0.12999999999999998
-					// return Math.floor(amount * 10 ** decimals)
-					return Number(ethers.parseUnits(Number(amount).toFixed(decimals), decimals))
 				}
 			}
 
@@ -1656,43 +1554,17 @@
 				}
 			}
 
-			// Broadcast tx
-			async function transactionBroadcastBtc(rawtx) {
-				const backend = getBackend();
-
-				if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
-					const resp = await fetch(`${backend}/tx`, {
-						method: 'POST',
-						body: rawtx
-					});
-					
-					return resp.text();
+			async function transactionBroadcast(rawTx) {
+				if (!globalData.provider) {
+					await getProvider();
 				}
 
-				const resp = await fetch(`${backend}/sendtx/`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: rawtx
-				})
-					
-				const data = await resp.json()
-
-				if (data.error) {
-					throw new Error(JSON.stringify(data.error))
-				}
-
-				return data.result
-			}
-
-			async function transactionBroadcast(rawtx) {
 				const network = getConfig();
 
 				if (network.isBtc) {
-					return transactionBroadcastBtc(rawtx);
+					return await globalData.provider.broadcastTransaction(rawTx);
 				} else if (network.isEth) {
-					return (await globalData.provider.broadcastTransaction(rawtx)).hash;
+					return (await globalData.provider.broadcastTransaction(rawTx)).hash;
 				}
 			}
 
@@ -1706,126 +1578,29 @@
 				return JSON.parse(ethers.toUtf8String(ethers.getBytes(bytesString)));
 			}
 
-			// Estimate fee
-			async function estimateFee() {
-				try {
-					const backend = getBackend();
-					let parsedFee;
-
-					if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
-						const resp = await fetch(`${getBackend()}/v1/fees/recommended`, {
-							method: 'GET'
-						});
-						
-						const data = await resp.json();
-						
-						if (data.error) {
-							throw new Error(JSON.stringify(data.error));
-						}
-						
-						parsedFee = amountFormat(data.fastestFee) * 1000;
-
-					} else {
-						const resp = await fetch(`${getBackend()}/estimatefee/1`, {
-							method: 'GET',
-							headers: {
-								'Content-Type': 'application/json'
-							}
-						});
-						
-						const data = await resp.json();
-						
-						if (data.error) {
-							throw new Error(JSON.stringify(data.error));
-						}
-						
-						parsedFee = Number(data.result);
-					}
-
-					if (!parsedFee || parsedFee < getConfig()['fee']) {
-						parsedFee = getConfig()['fee'];
-					}
-
-					return Math.floor(amountFormat(parsedFee / 1000, true) * getFeeMultiplier());
-				} catch {
-					return Math.floor(amountFormat(getConfig()['fee'] / 1000, true) * getFeeMultiplier());
-				}
-			}
-
-			// Get address UTXO
-			// This only returns an array of txid and unspent values
-			async function getUnspent(address) {
+			function getProviderBtc() {
+				const config = getConfig();
 				const backend = getBackend();
-				const utxos = [];
+				const isMempool = MEMPOOL_INSTANCES.some(i => backend.includes(i));
 
-				if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
-					const resp = await fetch(`${backend}/address/${address}/utxo`, {
-						method: 'GET'
-					});
+				const providerConfig = {
+					backend,
+					feeFallback: config.fee,
+					feeMultiplier: getFeeMultiplier(),
+				}
 
-					utxos.push(...await resp.json());
-
+				if (!isMempool) {
+					const provider = new btcSigner.CoinProvider(providerConfig);
+					globalData.provider = provider;
+					return { provider };
 				} else {
-					const resp = await fetch(`${backend}/utxo/${address}`, {
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json'
-						}
-					});
-
-					utxos.push(...await resp.json());
+					const provider = new btcSigner.MempoolProvider(providerConfig);
+					globalData.provider = provider;
+					return { provider };
 				}
-
-				// Return UTXOs in an ascending order as we want to spend the oldest coins first
-				return utxos.sort((a, b) => {
-					if (a.height === b.height) {
-						return a.vout - b.vout
-					}
-					return a.height - b.height
-				})
 			}
 
-			// Get transactions to build a psbt
-			// Since non-segwit addresses would need to input the whole tx object we ask the api full info
-			// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts#L36
-			async function getTransactions(txs = []) {
-				const backend = getBackend();
-				const results = [];
-
-				for (const chunks of chunk(txs, TX_CHUNK_SIZE)) {
-					const chunkResults = await Promise.all(chunks.map(async (tx, index) => {
-						await sleep(index * 20)
-
-						if (MEMPOOL_INSTANCES.some(i => backend.includes(i))) {
-							const resp = await fetch(`${getBackend()}/tx/${tx}/hex`, {
-								method: 'GET',
-							});
-
-							const hex = await resp.text();
-
-							return {
-								txid: tx,
-								hex
-							}
-
-						} else {
-							const resp = await fetch(`${getBackend()}/tx/${tx}`, {
-								method: 'GET',
-								headers: {
-									'Content-Type': 'application/json'
-								}
-							})
-							return resp.json()
-						}
-					}))
-
-					results.push(...chunkResults)
-				}
-
-				return results
-			}
-
-			async function getProvider() {
+			async function getProviderEth() {
 				const backend = getBackend();
 				const networkConfig = getConfig();
 
@@ -1871,6 +1646,16 @@
 				return { provider, staticNetwork }
 			}
 
+			function getProvider() {
+				const network = getConfig();
+
+				if (network.isBtc) {
+					return getProviderBtc();
+				} else if (network.isEth) {
+					return getProviderEth();
+				}
+			}
+
 			// Show big error message at the top of the page :D 
 			function showMessage(message, hide = true) {
 				$('#error-message').html(message)
@@ -1893,7 +1678,7 @@
 
 			// Set title
 			function setHomeTitle() {
-				if (globalData.keys) {
+				if (globalData.address) {
 					setTitle(getText('address') + ' ' + globalData.address)
 				} else {
 					setTitle(getText('open-wallet'))
@@ -1927,34 +1712,19 @@
 
 			/* Wallet functions */
 			async function walletBalanceBtc() {
-				let coinbase = 0;
-				let utxoBalance = 0;
+				const cachedBalance = await globalData.signer.getBalance()
 
-				const [fees, unspents] = await Promise.all([
-					estimateFee(),
-					getUnspent(globalData.address),
-				]);
+				const { feePerByte, utxoBalance, coinbase } = cachedBalance;
 
-				const utxos = unspents.filter((utxo) => {
-					if (utxo.coinbase && utxo.confirmations < 100) {
-						coinbase += Number(utxo.value)
-						return false
-					}
-					utxoBalance += Number(utxo.value)
-					return true
-				});
-
-				globalData.rfee = fees;
+				globalData.cachedBalance = cachedBalance;
 				globalData.balance = utxoBalance;
-				globalData.coinbase = coinbase;
-				globalData.utxos = utxos;
 
-				$('.fee-rate').text(`${fees} sat/vByte`);
-				$('.wallet-balance .amount').text(amountFormat(utxoBalance));
+				$('.fee-rate').text(`${feePerByte} sat/vByte`);
+				$('.wallet-balance .amount').text(formatCoins(utxoBalance));
 				$('.wallet-balance .ticker').text(getConfig()['ticker']);
 
 				if (coinbase) {
-					$('.coinbase-balance .amount').text(amountFormat(coinbase));
+					$('.coinbase-balance .amount').text(formatCoins(coinbase));
 					$('.coinbase-balance .ticker').text(getConfig()['ticker']);
 					$('.coinbase-balance').show();
 				}
@@ -2066,28 +1836,77 @@
 			}
 
 			function openWalletBtc(keys, keyType, mnemonic, mnemonicIndex) {
-				const network = getConfig();
-				const keyPrefix = electrumKeys[getAddressType()];
-
-				if (keyType === 'mnemonic') {
-					const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic), network.network);
-					const path = `m/${getDerivation()}'/${network.network.versions.bip44 || 0}'/0'/0/${mnemonicIndex}`;
-
-					keys = root.derivePath(path);
-
-					globalData.keys = keys;
+				if (!globalData.provider) {
+					getProvider();
 				}
 
-				const address = getAddress(keys.publicKey)
-				const redeem = getAddressScript(address).toString('hex')
+				const walletConfig = {
+					network: getConfig().network,
+					addrType: getAddressType(),
+				}
+
+				if (keyType === 'mnemonic') {
+					const signer = new btcSigner.MnemonicWallet(
+						globalData.provider,
+						{
+							...walletConfig,
+							mnemonic,
+						},
+						true
+					);
+
+					if (mnemonicIndex) {
+						signer.setKey(mnemonicIndex);
+					}
+
+					globalData.signer = signer;
+	
+				} else if (keyType === 'view-only') {
+					const signer = new btcSigner.VoidWallet(
+						globalData.provider,
+						{
+							...walletConfig,
+							publicKey: keys
+						}
+					)
+
+					globalData.signer = signer;
+
+				} else if (keyType === 'email') {
+					const signer = btcSigner.CoinWallet.fromBuffer(
+						globalData.provider,
+						walletConfig,
+						keys
+					)
+
+					globalData.signer = signer;
+
+				} else {
+					const signer = new btcSigner.CoinWallet(
+						globalData.provider,
+						{
+							...walletConfig,
+							privateKey: keys
+						}
+					)
+
+					globalData.signer = signer;
+
+				}
+
+				const address = globalData.signer.address;
+				const redeemScript = bitcoin.address.toOutputScript(
+					address,
+					walletConfig.network
+				).toString('hex');
 
 				globalData.address = address
 
 				$('#wallet-keys-mnemonic input').val(mnemonic || '');
 				$('#wallet-keys-address input').val(address);
-				$('#wallet-keys-pubkey input').val(keys.publicKey.toString('hex'));
-				$('#wallet-keys-privkey input').val(`${keyPrefix}:${keys.toWIF()}`);
-				$('#wallet-keys-script input').val(redeem);
+				$('#wallet-keys-pubkey input').val(globalData.signer.publicKey);
+				$('#wallet-keys-privkey input').val(globalData.signer.privateKeyWithPrefix);
+				$('#wallet-keys-script input').val(redeemScript);
 				
 				$('#wallet-address').html(address);
 				$('#history-link').attr('href', `${getConfig()['explorer']}/address/${address}`);
@@ -2107,8 +1926,6 @@
 					globalData.address = globalData.signer.address;
 					// for frontend purpose
 					keys = globalData.signer.privateKey;
-
-					globalData.keys = keys;
 
 				// should check if window.ethereum exists before calling this function
 				} else if (keyType === 'browser') {
@@ -2275,303 +2092,14 @@
 				startStream()
 			}
 
-			// Pick UTXOS by the desired outputs
-			// This is not necessary if you want to select all UTXO without limiting length
-			// Spend old UTXO first
-			function getInputs(utxos, outputs, spendAll = false) {
-				const outputAmounts = outputs.reduce((acc, output) => {
-					acc += output.value
-					return acc
-				}, 0)
-				
-				const { inputs } = utxos.reduce((acc, tx) => {
-					if (!spendAll && acc.amounts > outputAmounts) {
-						return acc
-					}
-					acc.amounts += Number(tx.value)
-					acc.inputs.push(tx)
-					return acc
-				}, {
-					amounts: 0,
-					inputs: []
-				})
-
-				// Prevent the transaction being too big
-				// One transaction could only relay 100KB dividing with legacy inputs it could only have 675 maximum
-				if (inputs.length + outputs.length > 650) {
-					const error = `Selected UTXO is too big (inputs: ${inputs.length}, outputs: ${outputs.length}), make sure to consolidate UTXOs before using it`
-					throw new Error(error);
-				}
-
-				return inputs
-			}
-
-			/**
-			 * Build bitcoinjs PSBT object
-			 * @param {Array<tx>} [txs] Array of transaction object fetched from backend, can be empty when segwit inputs
-			 * @param {Array<inputs>} [inputs] Array of utxo object fetched from backend, 
-			 * @param {Array<outputs>} [outputs] Array of desired payment outputs
-			 * @param {string} [changeAddress] Address to receive change amounts
-			 */
-			function buildPsbt(txs, inputs, outputs, changeAddress) {
-				const network = getConfig()['network']
-
-				const feePerByte = globalData.rfee
-
-				// Get public key to create psbt
-				const publicKey = globalData.keys.publicKey
-
-				// Get necessary address info
-				const address = getAddress(publicKey)
-				const addressType = getAddressType()
-				const script = getAddressScript(address)
-				const tapInternalKey = publicKey.slice(1, 33)
-
-				if (!changeAddress) {
-					changeAddress = address
-				}
-
-				let inputAmounts = 0
-				let outputAmounts = 0
-
-				let inputBytes = 0
-				let outputBytes = 0
-
-				const psbt = new bitcoin.Psbt({ network })
-
-				// Add inputs and sign them
-				inputs.forEach((input) => {
-					const hash = input.txid
-					const index = input.vout
-					const value = input.value = Number(input.value)
-
-					inputAmounts += value
-					inputBytes += input.bytes = getBytes(addressType)
-					
-					// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
-					if (addressType === 'taproot') {
-						psbt.addInput({
-							hash,
-							index,
-							witnessUtxo: {
-								script,
-								value
-							},
-							tapInternalKey
-						})
-					} else if (addressType === 'bech32') {
-						psbt.addInput({
-							hash,
-							index,
-							witnessUtxo: {
-								script,
-								value
-							}
-						})
-					} else if (addressType === 'segwit') {
-						const { output: redeemScript } = bitcoin.payments.p2wpkh({
-							pubkey: publicKey,
-							network,
-						})
-						psbt.addInput({
-							hash,
-							index,
-							witnessUtxo: {
-								script,
-								value
-							},
-							redeemScript
-						})
-					} else {
-						const tx = txs.find(t => t.txid === hash)
-						// Skip for simulation (should error when signing phase)
-						if (!tx?.hex) {
-							return
-						}
-						psbt.addInput({
-							hash,
-							index,
-							nonWitnessUtxo: Buffer.from(tx.hex, 'hex')
-						})
-					}
-				})
-
-				outputs.forEach((output) => {
-					// Handle OP_RETURN
-					if (output.returnData && output.value === 0) {
-						const data = checkHex(output.returnData)
-							? Buffer.from(output.returnData.slice(2), 'hex')
-							: Buffer.from(output.returnData, 'utf8')
-
-						output.script = bitcoin.payments.embed({
-							data: [data]
-						}).output
-
-						outputBytes += output.bytes = data.length + 12
-
-						psbt.addOutput(output)
-						return
-					}
-
-					// Special case for consolidation or to estimate fees when max spent
-					if (!output?.value) {
-						return
-					}
-
-					outputAmounts += output.value
-					outputBytes += output.bytes = getBytes(getScriptType(getAddressScript(output.address)), false)
-
-					psbt.addOutput(output)
-				})
-				
-				let vBytes = 10 + inputBytes + outputBytes
-
-				const fees = vBytes * feePerByte
-
-				const change = inputAmounts - outputAmounts - fees
-
-				// If the user doesn't have enough funds to pay fees cancel the tx
-				if (change < 0) {
-					const error = `Insufficient amount to cover fees, wants ${amountFormat(outputAmounts + fees)} have ${amountFormat(inputAmounts)}`
-					throw new Error(error)
-				}
-
-				if (change > fees) {
-					const output = { address: changeAddress, value: change }
-
-					outputAmounts += output.value
-					outputBytes += output.bytes = getBytes(getScriptType(getAddressScript(output.address)), false)
-					vBytes += output.bytes
-
-					outputs.push(output)
-					psbt.addOutput(output)
-				}
-
-				const createdTx = {
-					fees: amountFormat(fees),
-					inputAmounts: amountFormat(inputAmounts),
-					inputs,
-					outputAmounts: amountFormat(outputAmounts),
-					outputs,
-					vBytes,
-				}
-
-				console.log('UTXO:', createdTx)
-
-				return {
-					psbt,
-					...createdTx
-				}
-			}
-
-			function importPsbt(psbtHex) {
-				const network = getConfig()['network'];
-				const psbt = bitcoin.Psbt.fromHex(psbtHex, { network });
-
-				const inputByte = getBytes(getAddressType());
-
-				let inputAmounts = 0;
-				let outputAmounts = 0;
-
-				const inputBytes = inputByte * psbt.txInputs.length;
-				// Add change address bytes
-				let outputBytes = 0;
-
-				const inputs = psbt.txInputs.map((input, index) => {
-					const txInput = psbt.data.inputs[index];
-					const nonWitnessTx = txInput.nonWitnessUtxo ? bitcoin.Transaction.fromHex(txInput.nonWitnessUtxo, { network }) : undefined
-					
-					const txid = input.hash.toString('hex');
-					const vout = input.index;
-					const value = txInput.witnessUtxo?.value || nonWitnessTx?.outs?.[vout]?.value;
-					
-					inputAmounts += value;
-					
-					return {
-						txid,
-						vout,
-						value,
-						bytes: inputBytes
-					}
-				});
-
-				const outputs = psbt.txOutputs.map((output) => {
-					const bytes = getBytes(getScriptType(output.script), false);
-
-					outputAmounts += output.value;
-					outputBytes += bytes;
-
-					return {
-						...output,
-						bytes
-					}
-				});
-
-				const vBytes = 10 + inputBytes + outputBytes;
-				const fees = inputAmounts - outputAmounts;
-
-				const createdTx = {
-					fees: amountFormat(fees),
-					inputAmounts: amountFormat(inputAmounts),
-					inputs,
-					outputAmounts: amountFormat(outputAmounts),
-					outputs,
-					vBytes
-				}
-
-				console.log('UTXO:', createdTx)
-
-				return {
-					psbt,
-					...createdTx
-				}
-			}
-
-			function signPsbt(psbt) {
-				const { keys } = globalData
-				const addressType = getAddressType()
-
-				// If we opened read only
-				if (!keys || keys.signOnly) {
-					throw new Error('Can not sign psbt with view-only wallet!');
-				}
-
-				// https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/taproot.spec.ts
-				const tapKey = keys.publicKey.slice(1, 33)
-				const tweakedKey = addressType === 'taproot' ? keys.tweak(bitcoin.crypto.taggedHash('TapTweak', tapKey)) : undefined;
-
-				psbt.txInputs.forEach((_, index) => {
-					if (addressType === 'taproot') {
-						psbt.signInput(index, tweakedKey)
-						return
-					}
-					psbt.signInput(index, keys)
-				})
-
-				psbt.finalizeAllInputs()
-
-				return psbt.extractTransaction()
-			}
-
-			function getMaxSpendableBtc(changeAddress, inputs = globalData.utxos) {
-				const feePerByte = globalData.rfee;
-				
-				const inputAmounts = inputs.reduce((acc, curr) => acc + Number(curr.value), 0);
-				const inputBytes = getBytes(getAddressType()) * inputs.length;
-				const outputBytes = getBytes(getScriptType(getAddressScript(changeAddress)), false);
-
-				const vBytes = 10 + inputBytes + outputBytes;
-				const fees = feePerByte * vBytes;
-
-				return inputAmounts - fees;
-			}
-
-			function getMaxSpendable(changeAddress = globalData.address) {
+			async function getMaxSpendable(changeAddress) {
 				try {
 					const network = getConfig();
 
 					if (network.isBtc) {
-						return ethers.formatUnits(getMaxSpendableBtc(changeAddress), network.decimals);
+						return formatCoins(
+							await globalData.signer.getMaxSpendable(changeAddress, undefined, globalData.cachedBalance)
+						);
 
 					// populateEth function should be able to calculate full spendable balance excluding fees
 					// So we specify the full balance here
@@ -2598,7 +2126,7 @@
 
 				$.each($('#send-outputs .send-outputs-item'), (key, item) => {
 					const address = $('[name="send-address"]', item).val().trim()
-					const value = amountFormat($('[name="send-amount"]', item).val(), true)
+					const value = parseCoins($('[name="send-amount"]', item).val())
 					
 					if (!value || value <= 0) {
 						throw new Error(messages.error['not-valid-amount']);
@@ -2621,21 +2149,17 @@
 					});
 				}
 
-				const outputsCoins = amountFormat(outputs.reduce((acc, curr) => acc + curr.value, 0));
-				const inputs = getInputs(globalData.utxos, outputs);
+				const outputsCoins = outputs.reduce((acc, curr) => acc + curr.value, 0);
 
 				if (!Number(outputsCoins) || Number(outputsCoins) < 0) {
-					throw new Error(messages.error['not-enough-funds']);
+					throw new Error(messages.error['not-valid-amount']);
 				}
 
-				$('#status-screen span').html(messages.tx['loading-utxo'])
+				$('#status-screen span').html(messages.tx['loading-utxo']);
 
-				// Legacy inputs should have the full transaction input according to the BIP-174 standard
-				const txs = getAddressType() === 'legacy'
-					? await getTransactions([...new Set(inputs.map(t => t.txid))])
-					: []
+				const tx = await globalData.signer.populateTransaction(outputs, undefined, globalData.cachedBalance);
 
-				const tx = buildPsbt(txs, inputs, outputs, globalData.address);
+				console.log('TX:', tx);
 
 				globalData.tx = tx;
 
@@ -2656,19 +2180,19 @@
 								<td>Output Amounts</td>
 								<td>${tx.inputAmounts} ${network.ticker}</td>
 							</tr>
-							${globalData.tx.outputs.map((output, i) => `
+							${tx.outputs.map((output, i) => `
 							<tr>
 								<td>Output ${i} (${output.address})</td>
-								<td>${amountFormat(output.value)} ${network.ticker}</td>
+								<td>${formatCoins(output.value)} ${network.ticker}</td>
 							</tr>
 							`).join('')}
 							<tr>
 								<td>Value</td>
-								<td>${outputsCoins} ${network.ticker}</td>
+								<td>${formatCoins(outputsCoins)} ${network.ticker}</td>
 							</tr>
 							<tr>
 								<td>Fees</td>
-								<td>${tx.fees} ${network.ticker} (${amountFormat(tx.fees, true) / tx.vBytes} sat/vByte)</td>
+								<td>${tx.fees} ${network.ticker} (${parseCoins(tx.fees) / tx.vBytes} sat/vByte)</td>
 							</tr>
 							<tr>
 								<td>vBytes</td>
@@ -2677,7 +2201,7 @@
 						</tbody>
 					</table>
 				`);
-				$('#confirm-amount').text(`${outputsCoins} ${network.ticker} (Fees: ${tx.fees} ${network.ticker})`);
+				$('#confirm-amount').text(`${formatCoins(outputsCoins)} ${network.ticker} (Fees: ${tx.fees} ${network.ticker})`);
 
 				$('#status-screen').hide();
 				$('#confirm-screen').show();
@@ -2899,25 +2423,18 @@
 
 				$('#status-screen span').html(messages.tx['loading-utxo']);
 
-				// Legacy inputs should have the full transaction input according to the BIP-174 standard
-				const txs = getAddressType() === 'legacy'
-					? await getTransactions([...new Set(globalData.utxos.map(t => t.txid))])
-					: []
+				const txs = await globalData.signer.populateConsolidation(undefined, globalData.cachedBalance);
 
-				const inputs = chunk(globalData.utxos, 500);
-				const outputs = inputs.map(i => getMaxSpendableBtc(globalData.address, i));
-				
-				const psbts = inputs.map((input, index) => {
-					const output = [{ address: globalData.address, value: outputs[index] }]
-					return buildPsbt(txs, input, output, globalData.address);
-				});
+				const fees = txs.reduce((acc, curr) => acc + Number(curr.fees), 0);
 
-				const fees = psbts.reduce((acc, curr) => acc + Number(curr.fees), 0);
+				console.log('TX:', txs);
 
-				globalData.tx = psbts;
+				const inputLength = txs.reduce((acc, tx) => acc + tx.inputs.length, 0);
+
+				globalData.tx = txs;
 
 				// 2. Show confirmation screen
-				$('#confirm-amount').text(`${globalData.utxos.length} inputs (Consolidation Txs: ${psbts.length}, Fees: ${fees} ${getConfig()['ticker']})`);
+				$('#confirm-amount').text(`${inputLength} inputs (Consolidation Txs: ${txs.length}, Fees: ${fees} ${getConfig()['ticker']})`);
 
 				$('#status-screen').hide();
 				$('#confirm-screen').show();
@@ -3010,7 +2527,7 @@
 					const network = getConfig();
 
 					const signedTx = network.isBtc
-						? signPsbt(globalData.tx.psbt).toHex()
+						? globalData.signer.signTransaction(globalData.tx.psbt).toHex()
 						: network.isEth
 							? await globalData.signer.signTransaction(globalData.tx)
 							: '';
@@ -3059,7 +2576,7 @@
 							const txidContext = [];
 
 							for (let i = 0; i < txs.length; ++i) {
-								const tx = signPsbt(txs[i].psbt);
+								const tx = globalData.signer.signTransaction(txs[i].psbt);
 								const txid = await transactionBroadcast(tx.toHex());
 
 								txidContext.push(`
@@ -3076,7 +2593,7 @@
 							return;
 						}
 						
-						const tx = signPsbt(globalData.tx.psbt);
+						const tx = globalData.signer.signTransaction(globalData.tx.psbt);
 						txid = await transactionBroadcast(tx.toHex());
 
 					} else if (network.isEth) {
@@ -3149,6 +2666,7 @@
 
 			// All starts here
 			$(document).ready(function() {
+				initVersion();
 				initLang()
 				initFeeMultiplier()
 
@@ -3201,7 +2719,7 @@
 						globalData.resetTx();
 
 						if (network.isBtc) {
-							globalData.tx = importPsbt($('#wallet-sign-input').val());
+							globalData.tx = globalData.signer.parseTransaction($('#wallet-sign-input').val());
 
 						} else if (network.isEth) {
 							globalData.tx = parseTransaction($('#wallet-sign-input').val());
@@ -3216,37 +2734,29 @@
 						$('#send-close-footer').hide();
 						$('#tx-table').empty();
 
-						let formattedTx, formattedValue;
+						let formattedValue;
 
 						if (network.isBtc) {
-							formattedTx = {
-								fees: globalData.tx.fees,
-								inputAmounts: globalData.tx.inputAmounts,
-								inputs: globalData.tx.inputs,
-								outputAmounts: globalData.tx.outputAmounts,
-								outputs: globalData.tx.outputs.map(output => ({
-									value: output.value,
-									address: output.address,
-									bytes: output.bytes
-								})),
-								vBytes: globalData.tx.vBytes
-							}
+							const { outputAmounts, fees } = globalData.tx
 
-							formattedValue = `${formattedTx.outputAmounts} ${network.ticker} (Fees: ${globalData.tx.fees} ${network.ticker})`;
+							formattedValue = `${outputAmounts} ${network.ticker} (Fees: ${fees} ${network.ticker})`;
+
 						} else if (network.isEth) {
-							formattedTx = globalData.tx
 
-							const gasPrice = formattedTx.maxFeePerGas
-								? BigInt(formattedTx.maxFeePerGas) + BigInt(formattedTx.maxPriorityFeePerGas)
-								: BigInt(formattedTx.gasPrice);
+							const gasPrice = globalData.tx.maxFeePerGas
+								? BigInt(globalData.tx.maxFeePerGas) + BigInt(globalData.tx.maxPriorityFeePerGas)
+								: BigInt(globalData.tx.gasPrice);
 
-							formattedValue = (formattedTx.stringValue || `${ethers.formatUnits(formattedTx.value, network.decimals)}  ${network.ticker}`)
-								+ ` (Fees: ${ethers.formatUnits(gasPrice * BigInt(formattedTx.gasLimit), network.decimals)} ${network.ticker})`;
+							formattedValue = (
+								globalData.tx.stringValue || 
+								`${ethers.formatUnits(globalData.tx.value, network.decimals)}  ${network.ticker}`
+							)
+								+ ` (Fees: ${ethers.formatUnits(gasPrice * BigInt(globalData.tx.gasLimit), network.decimals)} ${network.ticker})`;
 						}
 
 						$('#status-screen .extra-info').html(`
 						    <div class="mt-3">
-								<textarea class="form-control" readonly cols="30" rows="10">${JSON.stringify(formattedTx, null, 2)}</textarea>
+								<textarea class="form-control" readonly cols="30" rows="10">${JSON.stringify(globalData.tx, null, 2)}</textarea>
 							</div>
 						`);
 
@@ -3296,9 +2806,7 @@
 
 						if ([51, 52].includes(wif.length)) {
 							try {
-								globalData.keys = ECPair.fromWIF(wif, network.network);
-								
-								openWallet(globalData.keys);
+								openWallet(wif);
 							} catch {
 								showMessage(messages.error['bad-priv-key']);
 								return;
@@ -3354,12 +2862,7 @@
 
 					if (network.isBtc) {
 						if (address.length === 66) {
-							globalData.keys = {
-								publicKey: Buffer.from(address, 'hex'),
-								toWIF: () => ''
-							}
-
-							openWallet(globalData.keys, 'view-only');
+							openWallet(address, 'view-only');
 
 							$('#view-only-address').val('');
 
@@ -3427,12 +2930,10 @@
 					}
 
 					if (network.isBtc) {
-						globalData.keys = ECPair.fromPrivateKey(Buffer.from(s), { network: network.network });
+						openWallet(Buffer.from(s), 'email');
 					} else if (network.isEth) {
-						globalData.keys = '0x' + Buffer.from(s).toString('hex');
+						openWallet('0x' + Buffer.from(s).toString('hex'));
 					}
-
-					openWallet(globalData.keys);
 
 					$('#open-email').val('');
 					$('#open-password').val('');
@@ -3444,22 +2945,22 @@
 					e.preventDefault();
 
 					const network = getConfig();
-					const keyPrefix = electrumKeys[getAddressType()];
+					const addrType = getAddressType();
 
 					if (network.isBtc) {
-						const mnemonic = bip39.generateMnemonic(128);
-						const root = bip32.fromSeed(bip39.mnemonicToSeedSync(mnemonic), network.network);
-						const path = `m/${getDerivation()}'/${network.network.versions.bip44 || 0}'/0'/0/0`;
+						const newSigner = new btcSigner.MnemonicWallet(
+							new btcSigner.CoinProvider({ backend: '' }),
+							{
+								network: network.network,
+								addrType,
+							}
+						);
 
-						const keys = root.derivePath(path);
-						const address = getAddress(keys.publicKey);
-						
-						if (address) {
-							$('#create-keys-mnemonic input').val(mnemonic);
-							$('#create-keys-address input').val(address);
-							$('#create-keys-pubkey input').val(keys.publicKey.toString('hex'));
-							$('#create-keys-privkey input').val(`${keyPrefix}:${keys.toWIF()}`);
-						}
+						$('#create-keys-mnemonic input').val(newSigner.mnemonic);
+						$('#create-keys-address input').val(newSigner.address);
+						$('#create-keys-pubkey input').val(newSigner.publicKey);
+						$('#create-keys-privkey input').val(newSigner.privateKeyWithPrefix);
+
 					} else if (network.isEth) {
 						const wallet = ethers.HDNodeWallet.createRandom();
 
@@ -3472,9 +2973,9 @@
 
 				// Broadcast raw transaction
 				$('#footer-broadcast').click(async function(){
-					const rawtx = $('#transaction-broadcast-raw')
+					const rawTx = $('#transaction-broadcast-raw')
 					try {
-						const txid = await transactionBroadcast(rawtx.val());
+						const txid = await transactionBroadcast(rawTx.val());
 
 						showMessage(`
 							${messages.tx['success']}<a href="${`${getConfig()['explorer']}/tx/${txid}`}" target="_blank" rel="noreferrer nofollow" >` + txid + `</a>
@@ -3483,7 +2984,7 @@
 						console.log(err)
 						showMessage(messages.error['broadcast-failed'])
 					}
-					rawtx.val('')
+					rawTx.val('')
 				})
 
 				// Check wallet balance on balance label click
@@ -3492,13 +2993,13 @@
 					e.preventDefault()
 				})
 
-				$('.fill-balance').click((e) => {
+				$('.fill-balance').click(async (e) => {
 					e.preventDefault()
 					let firstAddress = $('[name="send-address"]', $('#send-outputs .send-outputs-item')[0]).val()
 					if (!validateAddress(firstAddress)) {
 						firstAddress = undefined
-					}
-					$('[name="send-amount"]', $('#send-outputs .send-outputs-item')[0]).val(getMaxSpendable(firstAddress))
+					}					
+					$('[name="send-amount"]', $('#send-outputs .send-outputs-item')[0]).val(await getMaxSpendable(firstAddress))
 				})
 
 				$('#send-create').click(function(e){
@@ -3595,7 +3096,13 @@
 				})
 
 				$('#wallet-fee-select select').on('change', function() {
-					setCookie('multiplier', $('#wallet-fee-select select').val(), 60);
+					const multiplier = $('#wallet-fee-select select').val();
+
+					setCookie('multiplier', multiplier, 60);
+
+					if (globalData.provider?.feeMultiplier && feeMultipliers[multiplier]) {
+						globalData.provider.feeMultiplier = feeMultipliers[multiplier];
+					}
 				});
 
 				$('#scan-modal').on('hide.bs.modal', function () {
