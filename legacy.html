@@ -237,7 +237,7 @@
 							</form>
 						</div>
 						<div class="card-footer">
-							<div class="footer-item tab-item" data-tab="open-regular" tkey="open-reminder-temp">
+							<div class="footer-item tab-item" data-tab="open-regular" tkey="open-reminder-legacy">
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-browser">
 								<span tkey="generate-question"></span> <span tkey="install-wallet"></span>
@@ -2920,18 +2920,16 @@
 					s += ((regnums + regchars) + regupchars) * pass.length + '3571';
 					s += (s + '' + s);
 
+					s = new TextEncoder().encode(s);
+
 					for (let i = 0; i <= 51; i++) {
-						s = Buffer.from(
-							await crypto.subtle.digest('SHA-256',
-								new TextEncoder().encode(s)
-							)
-						).toString('hex');
+						s = await crypto.subtle.digest('SHA-256', s);
 					}
 
 					if (network.isBtc) {
-						openWallet(Buffer.from(s, 'hex'), 'email');
+						openWallet(Buffer.from(s), 'email');
 					} else if (network.isEth) {
-						openWallet('0x' + s);
+						openWallet('0x' + Buffer.from(s).toString('hex'));
 					}
 
 					$('#open-email').val('');

@@ -9,6 +9,8 @@ var walletLanguages = {
         'open-browser': 'Browser wallet',
 		'disclaimer': 'This page uses javascript to generate your addresses and sign your transactions within your browser, this means we never receive your private keys, this can be independently verified by reviewing the source code on Github.',
 		'open-reminder': '<b>Notice:</b> Please make sure that you remember your account details, otherwise you may lose access to your funds.',
+		'open-reminder-temp': '<b>Notice:</b> If you have created email during past few weeks and can not open it, migrate the old one from <a href="legacy.html" target="_blank" rel="noreferrer"> the legacy wallet </a>',
+		'open-reminder-legacy': '<b>Notice:</b> This is a legacy email wallet. Migrate balance ASAP.',
 		'install-wallet': 'Install <a href="https://metamask.io" target="_blank" rel="noreferrer">MetaMask</a> now!',
 		'open': 'Open',
 		'home': 'Home',

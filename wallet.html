@@ -10261,6 +10261,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         'open-browser': 'Browser wallet',
 		'disclaimer': 'This page uses javascript to generate your addresses and sign your transactions within your browser, this means we never receive your private keys, this can be independently verified by reviewing the source code on Github.',
 		'open-reminder': '<b>Notice:</b> Please make sure that you remember your account details, otherwise you may lose access to your funds.',
+		'open-reminder-temp': '<b>Notice:</b> If you have created email during past few weeks and can not open it, migrate the old one from <a href="legacy.html" target="_blank" rel="noreferrer"> the legacy wallet </a>',
+		'open-reminder-legacy': '<b>Notice:</b> This is a legacy email wallet. Migrate balance ASAP.',
 		'install-wallet': 'Install <a href="https://metamask.io" target="_blank" rel="noreferrer">MetaMask</a> now!',
 		'open': 'Open',
 		'home': 'Home',
@@ -11210,7 +11212,7 @@ const embedded = {
 							</form>
 						</div>
 						<div class="card-footer">
-							<div class="footer-item tab-item" data-tab="open-regular" tkey="open-reminder">
+							<div class="footer-item tab-item" data-tab="open-regular" tkey="open-reminder-temp">
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-browser">
 								<span tkey="generate-question"></span> <span tkey="install-wallet"></span>
@@ -13893,16 +13895,18 @@ const embedded = {
 					s += ((regnums + regchars) + regupchars) * pass.length + '3571';
 					s += (s + '' + s);
 
-					s = new TextEncoder().encode(s);
-
 					for (let i = 0; i <= 51; i++) {
-						s = await crypto.subtle.digest('SHA-256', s);
+						s = Buffer.from(
+							await crypto.subtle.digest('SHA-256',
+								new TextEncoder().encode(s)
+							)
+						).toString('hex');
 					}
 
 					if (network.isBtc) {
-						openWallet(Buffer.from(s), 'email');
+						openWallet(Buffer.from(s, 'hex'), 'email');
 					} else if (network.isEth) {
-						openWallet('0x' + Buffer.from(s).toString('hex'));
+						openWallet('0x' + s);
 					}
 
 					$('#open-email').val('');
