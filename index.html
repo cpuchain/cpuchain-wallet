@@ -11,15 +11,22 @@
 
 		<link id="coin-favicon" rel="icon" type="image/png" href="logos/cpuchain.png">
 
+		<script>
+			globalThis.process = {
+				browser: true
+			}
+		</script>
+
 		<script src="https://cdn.datatables.net/v/bs4-4.6.0/jq-3.7.0/dt-2.0.8/datatables.min.js" integrity="sha384-YXLhkIEkz0B9qJOuh+JgywjsB4yjYgxB7DCd6zelr/yDqJigjrYdpuytVM9E2nfI" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js" integrity="sha384-xeyyvbIlX+FahWHIZR6gjoC4A1i44cTBxZ330euRbtiXZwfcVDWVeOuJ4sGx8R2d" crossorigin="anonymous"></script>
 		<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
-		<script src="https://unpkg.com/btc-signer@1.0.1/lib/btcSigner.umd.min.js" integrity="sha384-7mG/wqBIVTCyIvFavUfZ72dfkX2RCZ2ZZrGCecxOOH7aK0ehj1Nf36CA5AJq0vch" crossorigin="anonymous"></script>
+		<script src="https://unpkg.com/btc-signer@1.0.2/lib/btcSigner.umd.min.js" integrity="sha384-evPWj4EsgqEwC5k4Y9EoT7ZC7ZBOdEadKDHLfL/x4tdzh3fDKfg1ebNRGczmlces" crossorigin="anonymous"></script>
 		<script src="multilang.js"></script>
 		<script src="abi.js"></script>
 		<script src="logos.js"></script>
+		<script src="tokens.js"></script>
 
 		<style>
 			html {
@@ -152,7 +159,10 @@
 						<div class="card-header">
 							<ul class="nav nav-tabs card-header-tabs">
 								<li class="nav-item mr-2">
-									<a class="nav-link tab-link active" data-tab-name="open-regular" data-tab-family="open-block" href="#" tkey="open-regular"></a>
+									<a class="nav-link tab-link active" data-tab-name="open-email-legacy" data-tab-family="open-block" href="#" tkey="open-email-legacy"></a>
+								</li>
+								<li class="nav-item mr-2">
+									<a class="nav-link tab-link" data-tab-name="open-bip39" data-tab-family="open-block" href="#" tkey="open-email-bip39"></a>
 								</li>
 								<li class="nav-item mr-2 eth-only">
 									<a class="nav-link tab-link" data-tab-name="open-browser" data-tab-family="open-block" href="#" tkey="open-browser"></a>
@@ -169,7 +179,7 @@
 							</ul>
 						</div>
 						<div class="card-body">
-							<form id="open-regular-form" class="open-form tab-item mt-2" data-tab="open-regular">
+							<form id="open-email-legacy-form" class="open-form tab-item mt-2" data-tab="open-email-legacy">
 								<div class="input-group pb-2">
 									<input id="open-email" name="open-email" class="form-control" type="text" tkey="email-address">
 								</div>
@@ -183,7 +193,38 @@
 											<option>segwit</option>
 											<option>legacy</option>
 										</select>
-										<button class="btn btn-outline-dark b-width" type="submit" id="open-regular-wallet" tkey="open"></button>
+										<button class="btn btn-outline-dark b-width" type="submit" id="open-email-legacy-wallet" tkey="open"></button>
+									</div>
+								</div>
+							</form>
+							<form id="open-bip39-form" class="open-form tab-item mt-2 d-none" data-tab="open-bip39">
+								<div class="input-group pb-2">
+									<input id="bip39-email" name="open-email" class="form-control" type="text" tkey="email-address">
+								</div>
+								<div class="input-group pb-2">
+									<input id="bip39-password" name="open-password" class="form-control" type="password" tkey="password">
+									<input id="bip39-password-confirm" name="open-password-confirm" class="form-control" type="password" tkey="password-confirm">
+									<input id="bip39-third-params" name="bip39-third-params" class="form-control" type="text" tkey="bip39-third-params">
+								</div>
+								<div class="input-group">
+									<input id="bip39-nonce" name="bip39-nonce" class="form-control" type="number" tkey="bip39-nonce">
+									<input id="bip39-mnemonic-index" name="bip39-mnemonic-index" class="form-control" type="number" tkey="bip39-mnemonic-index">
+									<select id="bip39-mnemonic-length" class="custom-select form-control">
+										<option value selected>24 words (Default)</option>
+										<option value="12">12 Words</option>
+										<option value="15">15 Words</option>
+										<option value="18">18 Words</option>
+										<option value="21">21 Words</option>
+										<option value="24">24 Words</option>
+									</select>
+									<div class="input-group-append">
+										<select class="custom-select address-type-select form-control btc-only">
+											<option>taproot</option>
+											<option>bech32</option>
+											<option>segwit</option>
+											<option>legacy</option>
+										</select>
+										<button class="btn btn-outline-dark b-width" type="submit" id="open-bip39-wallet" tkey="open"></button>
 									</div>
 								</div>
 							</form>
@@ -237,7 +278,9 @@
 							</form>
 						</div>
 						<div class="card-footer">
-							<div class="footer-item tab-item" data-tab="open-regular" tkey="open-reminder-temp">
+							<div class="footer-item tab-item" data-tab="open-email-legacy" tkey="open-reminder-temp">
+							</div>
+							<div class="footer-item tab-item d-none" data-tab="open-bip39" tkey="open-reminder">
 							</div>
 							<div class="footer-item tab-item d-none" data-tab="open-browser">
 								<span tkey="generate-question"></span> <span tkey="install-wallet"></span>
@@ -610,8 +653,6 @@
 			</div>
 		</footer>
 
-		<script src="tokens.js"></script>
-
 		<!-- All magic is here :D -->
 		<script>
 			/*global $, btcSigner, ethers, ERC20ABI, MulticallABI, walletLanguages, embedded, tokens, jsQR*/
@@ -628,7 +669,7 @@
 
 			// Config
 			let stream = undefined
-			const walletVersion = '1.1'
+			const walletVersion = '1.2'
 			const networkConfigs = {
 				CPU: {
 					uri: 'cpuchain:',
@@ -2887,7 +2928,7 @@
 				});
 
 				// Open wallet using email and password
-				$("#open-regular-form").submit(async function(e) {
+				$("#open-email-legacy-form").submit(async function(e) {
 					e.preventDefault();
 
 					const network = getConfig();
@@ -2896,7 +2937,7 @@
 					const pass = $("#open-password").val();
 					const passConfirm = $("#open-password-confirm").val();
 
-					if (!email.match(/[\s\w\d]+@[\s\w\d]+/g)) {
+					if (!email.match(/[\s\w\d]+@[\s\w\d]+/g) || !(email.length >= 5)) {
 						showMessage(messages.error['bad-email']);
 						return;
 					}
@@ -2911,32 +2952,70 @@
 						return;
 					}
 
-					let s = email;
-					s += '|' + pass + '|';
-					s += s.length + '|!@' + ((pass.length * 7) + email.length) * 7;
-					const regchars = (pass.match(/[a-z]+/g)) ? pass.match(/[a-z]+/g).length : 1;
-					const regupchars = (pass.match(/[A-Z]+/g)) ? pass.match(/[A-Z]+/g).length : 1;
-					const regnums = (pass.match(/[0-9]+/g)) ? pass.match(/[0-9]+/g).length : 1;
-					s += ((regnums + regchars) + regupchars) * pass.length + '3571';
-					s += (s + '' + s);
+					try {
+						const hex = await btcSigner.generateHexWithIdLegacy(email, pass);
+						
+						if (network.isBtc) {
+							openWallet(Buffer.from(hex.substring(2), 'hex'), 'email');
+						} else if (network.isEth) {
+							openWallet(hex);
+						}
+						
+						$('#open-email').val('');
+						$('#open-password').val('');
+						$('#open-password-confirm').val('');
+					} catch (err) {
+						showMessage(err.message);
+					}
+				});
 
-					for (let i = 0; i <= 51; i++) {
-						s = Buffer.from(
-							await crypto.subtle.digest('SHA-256',
-								new TextEncoder().encode(s)
-							)
-						).toString('hex');
+				// Open wallet using email and password (bip39)
+				$("#open-bip39-form").submit(async function(e) {
+					e.preventDefault();
+
+					const email = $("#bip39-email").val().toLowerCase();
+					const pass = $("#bip39-password").val();
+					const passConfirm = $("#bip39-password-confirm").val();
+
+					const thirdParams = $("#bip39-third-params").val()
+						? $("#bip39-third-params").val().split(',')
+						: undefined;
+					const nonce = parseInt($("#bip39-nonce").val()) || 0;
+					
+					const mnemonicLength = parseInt($("#bip39-mnemonic-length").val()) || undefined;
+					const mnemonicIndex = parseInt($("#bip39-mnemonic-index").val()) || 0;
+
+					if (!email.match(/[\s\w\d]+@[\s\w\d]+/g) || !(email.length >= 5)) {
+						showMessage(messages.error['bad-email']);
+						return;
 					}
 
-					if (network.isBtc) {
-						openWallet(Buffer.from(s, 'hex'), 'email');
-					} else if (network.isEth) {
-						openWallet('0x' + s);
+					if (!pass.length >= 5) {
+						showMessage(messages.error['pass-too-short']);
+						return;
 					}
 
-					$('#open-email').val('');
-					$('#open-password').val('');
-					$('#open-password-confirm').val('');
+					if (pass !== passConfirm) {
+						showMessage(messages.error['pass-not-match']);
+						return;
+					}
+
+					try {
+						const { mnemonic } = await btcSigner.generateMnemonicWithId(
+							email,
+							pass,
+							thirdParams,
+							mnemonicLength,
+							nonce
+						);
+						
+						openWallet(undefined, 'mnemonic', mnemonic, mnemonicIndex);
+						$('#bip39-email').val('');
+						$('#bip39-password').val('');
+						$('#bip39-password-confirm').val('');
+					} catch (err) {
+						showMessage(err.message);
+					}
 				});
 
 				// Create new wallet

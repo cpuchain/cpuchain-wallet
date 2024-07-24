@@ -2,6 +2,8 @@ var walletLanguages = {
 	'en': {
 		'lang-alias': 'English',
 		'wallet-title': 'Wallet',
+		'open-email-legacy': 'Email wallet (Legacy)',
+		'open-email-bip39': 'Email wallet (BIP39.org)',
 		'open-regular': 'Regular wallet',
 		'open-key': 'Open by key',
 		'open-mnemonic': 'Mnemonic wallet',
@@ -28,6 +30,9 @@ var walletLanguages = {
 		'wif-key': 'Wallet Private key',
 		'mnemonic-key': 'BIP39 Mnemonic Phrase',
 		'mnemonic-index': 'Account Index',
+		'bip39-third-params': 'Third Params (Optional, splitted by comma)',
+		'bip39-nonce': 'Wallet Nonce (Optional)',
+		'bip39-mnemonic-index': 'Mnemonic Index (Optional)',
 		'create-wallet': 'Create wallet',
 		'show': 'Show',
 		'hide': 'Hide',
