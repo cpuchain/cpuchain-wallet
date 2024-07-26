@@ -22,7 +22,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js" integrity="sha384-xeyyvbIlX+FahWHIZR6gjoC4A1i44cTBxZ330euRbtiXZwfcVDWVeOuJ4sGx8R2d" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.0.2/lib/btcSigner.umd.min.js" integrity="sha384-evPWj4EsgqEwC5k4Y9EoT7ZC7ZBOdEadKDHLfL/x4tdzh3fDKfg1ebNRGczmlces" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.0.3/lib/btcSigner.umd.min.js" integrity="sha384-PwCh1jv5ClmROrNJj8HVCQzKFUkzb8L74ANXQXeww4AhrMS85t/yE+TkHl0FNALH" crossorigin="anonymous"></script>
 		<script src="multilang.js"></script>
 		<script src="abi.js"></script>
 		<script src="logos.js"></script>
@@ -2978,7 +2978,7 @@
 					const passConfirm = $("#bip39-password-confirm").val();
 
 					const thirdParams = $("#bip39-third-params").val()
-						? $("#bip39-third-params").val().split(',')
+						? $("#bip39-third-params").val().replaceAll(', ', ',').split(',').filter(a => a)
 						: undefined;
 					const nonce = parseInt($("#bip39-nonce").val()) || 0;
 					
