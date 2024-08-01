@@ -22,7 +22,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js" integrity="sha384-xeyyvbIlX+FahWHIZR6gjoC4A1i44cTBxZ330euRbtiXZwfcVDWVeOuJ4sGx8R2d" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.0.3/lib/btcSigner.umd.min.js" integrity="sha384-PwCh1jv5ClmROrNJj8HVCQzKFUkzb8L74ANXQXeww4AhrMS85t/yE+TkHl0FNALH" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.0.5/lib/btcSigner.umd.min.js" integrity="sha384-QZD6PXdWjbHyhp1qkL4FLLApIx6WShPwcXPzdzaiIAfmN0ypLEL80XDL1qyRM8lS" crossorigin="anonymous"></script>
 		<script src="multilang.js"></script>
 		<script src="abi.js"></script>
 		<script src="logos.js"></script>
@@ -2136,7 +2136,10 @@
 
 					if (network.isBtc) {
 						return formatCoins(
-							await globalData.signer.getMaxSpendable(changeAddress, undefined, globalData.cachedBalance)
+							await globalData.signer.getMaxSpendable({
+								changeAddress,
+								cachedBalance: globalData.cachedBalance
+							})
 						);
 
 					// populateEth function should be able to calculate full spendable balance excluding fees
@@ -2195,7 +2198,11 @@
 
 				$('#status-screen span').html(messages.tx['loading-utxo']);
 
-				const tx = await globalData.signer.populateTransaction(outputs, undefined, globalData.cachedBalance);
+				const tx = await globalData.signer.populateTransaction(outputs, {
+					cachedBalance: globalData.cachedBalance,
+				});
+
+				await globalData.signer.populatePsbt(tx);
 
 				console.log('TX:', tx);
 
@@ -2443,39 +2450,53 @@
 			}
 
 			async function populateConsolidation() {
-				globalData.resetTx();
-				$('#send-modal').modal('toggle')
-				$('#send-title').text(messages.title['sure'])
-				$('#send-cancel').show();
-				$('#send-create').hide();
-				$('#send-sign').hide();
-				$('#send-confirm').show();
-				$('#send-close-footer').hide();
+				try {
+					globalData.resetTx();
+					$('#send-modal').modal('toggle')
+					$('#send-title').text(messages.title['sure'])
+					$('#send-cancel').show();
+					$('#send-create').hide();
+					$('#send-sign').hide();
+					$('#send-confirm').show();
+					$('#send-close-footer').hide();
 
-				// 1. Show UTXO build status
-				$('#confirm-screen').hide();
-				$('#status-screen').show();
-				$('#status-screen .extra-info').empty();
-				$('#status-screen span').html(messages.tx['generating']);
-				$('#tx-table').empty();
+					// 1. Show UTXO build status
+					$('#confirm-screen').hide();
+					$('#status-screen').show();
+					$('#status-screen .extra-info').empty();
+					$('#status-screen span').html(messages.tx['generating']);
+					$('#tx-table').empty();
 
-				$('#status-screen span').html(messages.tx['loading-utxo']);
+					$('#status-screen span').html(messages.tx['loading-utxo']);
 
-				const txs = await globalData.signer.populateConsolidation(undefined, globalData.cachedBalance);
+					const txs = await globalData.signer.populateConsolidation({
+						cachedBalance: globalData.cachedBalance,
+					});
 
-				const fees = txs.reduce((acc, curr) => acc + Number(curr.fees), 0);
+					const fees = txs.reduce((acc, curr) => acc + Number(curr.fees), 0);
 
-				console.log('TX:', txs);
+					console.log('TX:', txs);
 
-				const inputLength = txs.reduce((acc, tx) => acc + tx.inputs.length, 0);
+					const inputLength = txs.reduce((acc, tx) => acc + tx.inputs.length, 0);
 
-				globalData.tx = txs;
+					globalData.tx = txs;
 
-				// 2. Show confirmation screen
-				$('#confirm-amount').text(`${inputLength} inputs (Consolidation Txs: ${txs.length}, Fees: ${fees} ${getConfig()['ticker']})`);
+					// 2. Show confirmation screen
+					$('#confirm-amount').text(`${inputLength} inputs (Consolidation Txs: ${txs.length}, Fees: ${fees} ${getConfig()['ticker']})`);
 
-				$('#status-screen').hide();
-				$('#confirm-screen').show();
+					$('#status-screen').hide();
+					$('#confirm-screen').show();
+				} catch (error) {
+					console.log(error);
+					globalData.resetTx();
+					$('#status-screen span').html(messages.error['broadcast-failed']);
+					$('#confirm-title').text(messages.title['failed']);
+					$('#status-screen .extra-info').html(`
+						<div class="mt-3">
+							<textarea class="form-control" readonly cols="30" rows="10">${error.message}</textarea>
+						</div>
+					`);
+				}
 			}
 
 			async function populateTransaction() {
@@ -3076,7 +3097,7 @@
 					let firstAddress = $('[name="send-address"]', $('#send-outputs .send-outputs-item')[0]).val()
 					if (!validateAddress(firstAddress)) {
 						firstAddress = undefined
-					}					
+					}
 					$('[name="send-amount"]', $('#send-outputs .send-outputs-item')[0]).val(await getMaxSpendable(firstAddress))
 				})
 
