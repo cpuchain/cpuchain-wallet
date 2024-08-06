@@ -5,11 +5,14 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://cdn.datatables.net/v/bs4-4.6.0/jq-3.7.0/dt-2.0.8/datatables.min.css" integrity="sha384-Jf0ltIZwC+aV9/rY5FZ9dojcq44FUi62im7lystWg+6Qo9CNfn+glovFA+jzKrrX" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jsweb/font-awesome-base64@2.4.2/fa-all.css" integrity="sha384-rAubePlPr5GmhldeD91zL0pl+HTbUXQ68qd7Dw9hoghRR4PBSVDG5ms/fhlYX1vW" crossorigin="anonymous">
+		<title>CPUchain Wallet</title>
+		<meta name="description" content="CPUchain Web Wallet">
 
 		<link id="coin-favicon" rel="icon" type="image/png" href="logos/cpuchain.png">
+
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jsweb/font-awesome-base64@2.4.2/fa-all.css" integrity="sha384-rAubePlPr5GmhldeD91zL0pl+HTbUXQ68qd7Dw9hoghRR4PBSVDG5ms/fhlYX1vW" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@2.1.3/css/dataTables.bootstrap4.min.css" integrity="sha384-0KscpVDhBnNtS+8A0GBYhIcV5+eSYeo2IhiT53C+ztHx7PGbwekJz3qcyk0HVqHs" crossorigin="anonymous">
 
 		<script>
 			globalThis.process = {
@@ -17,12 +20,14 @@
 			}
 		</script>
 
-		<script src="https://cdn.datatables.net/v/bs4-4.6.0/jq-3.7.0/dt-2.0.8/datatables.min.js" integrity="sha384-YXLhkIEkz0B9qJOuh+JgywjsB4yjYgxB7DCd6zelr/yDqJigjrYdpuytVM9E2nfI" crossorigin="anonymous"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js" integrity="sha384-xeyyvbIlX+FahWHIZR6gjoC4A1i44cTBxZ330euRbtiXZwfcVDWVeOuJ4sGx8R2d" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jquery.qrcode@1.0.3/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/datatables.net@2.1.3/js/dataTables.min.js" integrity="sha384-zbEbRYy/9Ud50FDSbhpfwL35ABQ+TEWHbGMOtRUX2F/NesxVNbwpsWaZKLBE96l7" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@2.1.3/js/dataTables.bootstrap4.min.js" integrity="sha384-lzE84zE76t/xTDUpoKl8o6c0h10nNP8YllhiEMM0c/sSn4F16OzlMehMoHkVTsTN" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js" integrity="sha384-gpR0Q6Hx/O+uevlbpbANbS0LWjbejPV1sqD/8w422l/fW8whGY0EPmKw3uG7ACYP" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.0.6/lib/btcSigner.umd.min.js" integrity="sha384-kovkDbp/eu9YA1622p4Y2Da5MX2+ls+uFv7U/Tt+3/JyD4Gp3WsMDB1HW5kFCnTa" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.0.7/lib/btcSigner.umd.min.js" integrity="sha384-z0IRnXRK3SDK+ypyUzTQGHuoNfIdyw17lYAjhwQMIg4IZg91iHAnK/s/ttg+rjVD" crossorigin="anonymous"></script>
 		<script src="multilang.js"></script>
 		<script src="abi.js"></script>
 		<script src="logos.js"></script>
@@ -107,8 +112,6 @@
 				word-wrap: break-word;
 			}
 		</style>
-		<title>CPUchain Wallet</title>
-		<meta name="description" content="CPUchain Web Wallet">
 	</head>
 	<body>
 		<!-- Navbar -->
@@ -669,7 +672,7 @@
 
 			// Config
 			let stream = undefined
-			const walletVersion = '1.3'
+			const walletVersion = '1.4'
 			const networkConfigs = {
 				CPU: {
 					uri: 'cpuchain:',
