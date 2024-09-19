@@ -672,7 +672,7 @@
 
 			// Config
 			let stream = undefined
-			const walletVersion = '1.5'
+			const walletVersion = '1.6'
 			const networkConfigs = {
 				CPU: {
 					uri: 'cpuchain:',
@@ -1681,7 +1681,10 @@
 					pollingInterval: 10000,
 				});
 
-				networkConfig.chainId = Number(staticNetwork.chainId);
+				if (networkConfig.chainId !== Number(staticNetwork.chainId)) {
+					const errMsg = `${backend} doesn't have desired network ${networkConfig.chainId}, has ${Number(staticNetwork.chainId)}`;
+					throw new Error(errMsg);
+				}
 
 				globalData.chainId = Number(staticNetwork.chainId);
 				globalData.provider = provider;
@@ -1974,13 +1977,16 @@
 
 					const browserProvider = new ethers.BrowserProvider(window.ethereum, providerNetwork);
 
-					globalData.signer = await browserProvider.getSigner(0);
+					const signer = await browserProvider.getSigner(0);
 
-					if (Number(window.ethereum.networkVersion) !== providerNetwork.chainid) {
+					const signerChainId = Number(await window.ethereum.request({ method: 'net_version' }));
+
+					if (signerChainId !== providerNetwork.chainId) {
 						await switchNetwork();
 					}
 
-					globalData.address = globalData.signer.address
+					globalData.signer = signer;
+					globalData.address = signer.address;
 					globalData.browserProvider = browserProvider;
 
 					window.ethereum.on('chainChanged', closeWalletTimeout);
@@ -2713,6 +2719,7 @@
 				if (globalData.browserProvider) {
 					window.ethereum.removeListener('accountsChanged', closeWalletTimeout);
 					window.ethereum.removeListener('chainChanged', closeWalletTimeout);
+					window.ethereum.removeListener('disconnect', closeWalletTimeout);
 				}
 
 				globalData.clear()
