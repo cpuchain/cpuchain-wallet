@@ -12,7 +12,7 @@
 
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@jsweb/font-awesome-base64@2.4.2/fa-all.css" integrity="sha384-rAubePlPr5GmhldeD91zL0pl+HTbUXQ68qd7Dw9hoghRR4PBSVDG5ms/fhlYX1vW" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@2.1.3/css/dataTables.bootstrap4.min.css" integrity="sha384-0KscpVDhBnNtS+8A0GBYhIcV5+eSYeo2IhiT53C+ztHx7PGbwekJz3qcyk0HVqHs" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@2.1.8/css/dataTables.bootstrap4.min.css" integrity="sha384-0KscpVDhBnNtS+8A0GBYhIcV5+eSYeo2IhiT53C+ztHx7PGbwekJz3qcyk0HVqHs" crossorigin="anonymous">
 
 		<script>
 			globalThis.process = {
@@ -23,9 +23,9 @@
 		<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/jquery.qrcode@1.0.3/jquery.qrcode.min.js" integrity="sha384-0B/45e2to395pfnCkbfqwKFFwAa7zXdvd42eAFJa3Vm8KZ/jmHdn93XdWi//7MDS" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/datatables.net@2.1.3/js/dataTables.min.js" integrity="sha384-zbEbRYy/9Ud50FDSbhpfwL35ABQ+TEWHbGMOtRUX2F/NesxVNbwpsWaZKLBE96l7" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@2.1.3/js/dataTables.bootstrap4.min.js" integrity="sha384-lzE84zE76t/xTDUpoKl8o6c0h10nNP8YllhiEMM0c/sSn4F16OzlMehMoHkVTsTN" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js" integrity="sha384-gpR0Q6Hx/O+uevlbpbANbS0LWjbejPV1sqD/8w422l/fW8whGY0EPmKw3uG7ACYP" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/datatables.net@2.1.8/js/dataTables.min.js" integrity="sha384-MgwUq0TVErv5Lkj/jIAgQpC+iUIqwhwXxJMfrZQVAOhr++1MR02yXH8aXdPc3fk0" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@2.1.8/js/dataTables.bootstrap4.min.js" integrity="sha384-lzE84zE76t/xTDUpoKl8o6c0h10nNP8YllhiEMM0c/sSn4F16OzlMehMoHkVTsTN" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.0.8/lib/btcSigner.umd.min.js" integrity="sha384-guReYpfzofZauzGdHb+HQnjAaslXOVFoOaGwUhAIqT5/Ceab/Kpy0m4Fo3OMu7kk" crossorigin="anonymous"></script>
 		<script src="multilang.js"></script>
@@ -658,7 +658,7 @@
 
 		<!-- All magic is here :D -->
 		<script>
-			/*global $, btcSigner, ethers, ERC20ABI, MulticallABI, walletLanguages, embedded, tokens, jsQR*/
+			/*global $, btcSigner, ethers, ERC20ABI, MulticallABI, OpGasPriceOracleABI, walletLanguages, embedded, tokens, jsQR*/
 			// todo: replace bitcoinjs with @scure/btc-signer which provides similar interface with bitcoinjs but supports bigint
 			// so that we could sign transactions with large amount of coins like Dogecoin
 			const { coininfo, Buffer, bitcoin, formatCoins, parseCoins, electrumKeys } = btcSigner;
@@ -672,7 +672,7 @@
 
 			// Config
 			let stream = undefined
-			const walletVersion = '1.5'
+			const walletVersion = '1.8'
 			const networkConfigs = {
 				CPU: {
 					uri: 'cpuchain:',
@@ -743,18 +743,18 @@
 					chainId: 1,
 					nodes: [
 						'https://rpc.mevblocker.io',
-						'https://api.securerpc.com/v1',
+						'https://eth.llamarpc.com',
 						'https://1rpc.io/eth',
 						'https://eth.merkle.io',
 						'https://eth.drpc.org',
 						'https://eth.nodeconnect.org',
+						'https://ethereum-rpc.publicnode.com',
 						'https://api.zmok.io/mainnet/oaen6dy8ff6hju9k',
 						'https://eth.rpc.blxrbdn.com',
 						'https://rpc.ankr.com/eth',
 						'https://eth.public-rpc.com',
+						'https://api.securerpc.com/v1',
 						'https://eth-mainnet.nodereal.io/v1/1659dfb40aa24bbb8153a677b98064d7',
-						'https://eth.llamarpc.com',
-						'https://ethereum-rpc.publicnode.com',
 						'https://public.stackup.sh/api/v1/node/ethereum-mainnet',
 					],
 					ticker: 'ETH',
@@ -805,6 +805,7 @@
 					decimals: 18,
 					explorer: 'https://optimistic.etherscan.io',
 					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					opGasPriceOracle: '0x420000000000000000000000000000000000000F',
 					fallbackGas: {
 						maxFeePerGas: '0.02',
 						maxPriorityFeePerGas: '0.001'
@@ -828,6 +829,7 @@
 					decimals: 18,
 					explorer: 'https://basescan.org',
 					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					opGasPriceOracle: '0x420000000000000000000000000000000000000F',
 					fallbackGas: {
 						maxFeePerGas: '0.02',
 						maxPriorityFeePerGas: '0.001'
@@ -840,19 +842,19 @@
 					logo: 'bnb.png',
 					chainId: 56,
 					nodes: [
+						'https://bsc-dataseed.bnbchain.org',
+						'https://bsc-dataseed1.defibit.io',
+						'https://bsc-dataseed1.ninicoin.io',
+						'https://bsc-dataseed1.bnbchain.org',
 						'https://binance.nodereal.io',
-						'https://binance.llamarpc.com',
 						'https://bsc-mainnet.nodereal.io/v1/64a9df0874fb4a93b9d0a3849de012d3',
 						'https://1rpc.io/bnb',
+						'https://binance.llamarpc.com',
 						'https://bsc-mainnet.public.blastapi.io',
 						'https://bnb.api.onfinality.io/public',
 						'https://bsc.rpc.blxrbdn.com',
 						'https://rpc.ankr.com/bsc',
 						'https://bscrpc.com',
-						'https://bsc-dataseed.bnbchain.org',
-						'https://bsc-dataseed1.defibit.io',
-						'https://bsc-dataseed1.ninicoin.io',
-						'https://bsc-dataseed1.bnbchain.org',
 						'https://bsc-rpc.publicnode.com',
 						'https://public.stackup.sh/api/v1/node/bsc-mainnet',
 					],
@@ -1008,18 +1010,39 @@
 					logo: 'ethereum.png',
 					chainId: 11155111,
 					nodes: [
-						'https://ethereum-sepolia.publicnode.com',
-						'https://1rpc.io/sepolia',
 						'https://rpc.sepolia.org',
 						'https://rpc2.sepolia.org',
+						'https://1rpc.io/sepolia',
 						'https://rpc.sepolia.ethpandaops.io',
 						'https://rpc-sepolia.rockx.com',
+						'https://ethereum-sepolia.publicnode.com',
 						'https://eth-sepolia.api.onfinality.io/public',
 					],
 					ticker: 'ETH',
 					decimals: 18,
 					explorer: 'https://sepolia.etherscan.io',
 					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					fallbackGas: {
+						maxFeePerGas: '1',
+						maxPriorityFeePerGas: '0.001'
+					},
+				},
+				BASE_SEP: {
+					uri: 'ethereum:',
+					title: 'Base Sepolia Wallet',
+					name: 'Base Sepolia (ETH)',
+					logo: 'ethereum.png',
+					chainId: 84532,
+					nodes: [
+						'https://sepolia.base.org',
+						'https://base-sepolia-rpc.publicnode.com',
+						'https://base-sepolia.blockpi.network/v1/rpc/public',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://sepolia.basescan.org',
+					Multicall: '0xcA11bde05977b3631167028862bE2a173976CA11',
+					opGasPriceOracle: '0x420000000000000000000000000000000000000F',
 					fallbackGas: {
 						maxFeePerGas: '1',
 						maxPriorityFeePerGas: '0.001'
@@ -1077,6 +1100,7 @@
 				browserProvider: null,
 				signer: null,
 				Multicall: null,
+				OpGasPriceOracle: null,
 				blockNumber: null,
 				chainId: null,
 				fees: {
@@ -1108,6 +1132,7 @@
 				clearNetwork: function() {
 					this.provider = null;
 					this.Multicall = null;
+					this.OpGasPriceOracle = null,
 					this.blockNumber = null;
 					this.chainId = null;
 					this.fees = {
@@ -1562,11 +1587,11 @@
 
 			const hex = d => `0x${Number(d).toString(16)}`;
 
-			function getNetworkParams() {
+			function getNetworkParams(chainId) {
 				const networkConfig = getConfig();
 
 				return [{
-					chainId: hex(networkConfig.chainId),
+					chainId: hex(chainId),
 					chainName: networkConfig.name,
 					nativeCurrency: {
 						name: networkConfig.name,
@@ -1578,19 +1603,17 @@
 				}];
 			}
 
-			async function switchNetwork() {
-				const networkConfig = getConfig();
-
+			async function switchNetwork(chainId) {
 				try {
 					await window.ethereum.request({
 						method: 'wallet_switchEthereumChain',
-						params: [{ chainId: hex(networkConfig.chainId) }]
+						params: [{ chainId: hex(Number(chainId)) }]
 					});
 				} catch (switchError) {
 					if (switchError.code === 4902) {
 						await window.ethereum.request({
 							method: 'wallet_addEthereumChain',
-							params: getNetworkParams(),
+							params: getNetworkParams(Number(chainId)),
 						});
 					} else {
 						throw switchError;
@@ -1659,6 +1682,10 @@
 					globalData.provider = provider;
 					globalData.Multicall = new ethers.BaseContract(networkConfig['Multicall'], MulticallABI, provider);
 
+					if (networkConfig.opGasPriceOracle) {
+						globalData.OpGasPriceOracle = new ethers.BaseContract(networkConfig.opGasPriceOracle, OpGasPriceOracleABI, provider);
+					}
+
 					const fallbackGas = networkConfig.fallbackGas;
 
 					if (fallbackGas.maxFeePerGas) {
@@ -1681,11 +1708,18 @@
 					pollingInterval: 10000,
 				});
 
-				networkConfig.chainId = Number(staticNetwork.chainId);
+				if (networkConfig.chainId !== 31337 && networkConfig.chainId !== Number(staticNetwork.chainId)) {
+					const errMsg = `${backend} doesn't have desired network ${networkConfig.chainId}, has ${Number(staticNetwork.chainId)}`;
+					throw new Error(errMsg);
+				}
 
 				globalData.chainId = Number(staticNetwork.chainId);
 				globalData.provider = provider;
 				globalData.Multicall = new ethers.BaseContract(networkConfig['Multicall'], MulticallABI, provider);
+
+				if (networkConfig.opGasPriceOracle) {
+					globalData.OpGasPriceOracle = new ethers.BaseContract(networkConfig.opGasPriceOracle, OpGasPriceOracleABI, provider);
+				}
 
 				return { provider, staticNetwork }
 			}
@@ -1752,6 +1786,27 @@
 				});
 
 				return res
+			}
+
+			async function getL1Fee(tx = {}) {
+				const OpGasPriceOracle = globalData.OpGasPriceOracle;
+
+				if (!OpGasPriceOracle) {
+					return 0n;
+				}
+
+				const serializedTx = ethers.Transaction.from({
+					chainId: tx.chainId || 10000,
+					data: tx.data || '0x',
+					gasLimit: tx.gasLimit || 10_000_000,
+					gasPrice: tx.gasPrice || ethers.parseUnits('1', 'gwei'),
+					nonce: tx.nonce || 10_000,
+					to: tx.to || ethers.ZeroAddress,
+					type: tx.type || 0,
+					value: tx.value || ethers.parseEther('1'),
+				}).unsignedSerialized;
+
+				return (await OpGasPriceOracle.getL1Fee(serializedTx)) * 13n / 10n;
 			}
 
 			/* Wallet functions */
@@ -1974,13 +2029,16 @@
 
 					const browserProvider = new ethers.BrowserProvider(window.ethereum, providerNetwork);
 
-					globalData.signer = await browserProvider.getSigner(0);
+					const signer = await browserProvider.getSigner(0);
 
-					if (Number(window.ethereum.networkVersion) !== providerNetwork.chainid) {
-						await switchNetwork();
+					const signerChainId = Number(await window.ethereum.request({ method: 'net_version' }));
+
+					if (signerChainId !== Number(providerNetwork.chainId)) {
+						await switchNetwork(Number(providerNetwork.chainId));
 					}
 
-					globalData.address = globalData.signer.address
+					globalData.signer = signer;
+					globalData.address = signer.address;
 					globalData.browserProvider = browserProvider;
 
 					window.ethereum.on('chainChanged', closeWalletTimeout);
@@ -2342,26 +2400,28 @@
 					txData.data = ercInterface.encodeFunctionData('transfer', [toAddress, tokenValue]);
 
 				} else {
-					const [nonce, ethBalance] = await Promise.all([
+					txData.data = rawData || '0x';
+					txData.to = toAddress;
+
+					const [nonce, ethBalance, l1Fee] = await Promise.all([
 						provider.getTransactionCount(signer.address, 'pending'),
 						provider.getBalance(signer.address),
+						getL1Fee(txData),
 					]);
 					const [symbol, decimals] = [network.ticker, network.decimals];
 
 					txData.nonce = nonce;
-					txData.data = rawData || '0x';
-					txData.to = toAddress;
 
 					const ethValue = ethers.parseUnits(stringValue || '0', decimals);
 
 					stringValue += ` ${symbol}`;
 
 					if (ethValue >= ethBalance) {
-						txData.value = ethBalance - (gasPrice * 1000000n);
+						txData.value = ethBalance - (gasPrice * 1000000n) - l1Fee;
 						
 						const gasLimit = await provider.estimateGas(txData);
 
-						txData.value = ethBalance - (gasPrice * (gasLimit !== 21000n ? gasLimit * 11000n / 10000n : gasLimit));
+						txData.value = ethBalance - (gasPrice * (gasLimit !== 21000n ? gasLimit * 11500n / 10000n : gasLimit)) - l1Fee;
 
 						stringValue = `${ethers.formatUnits(txData.value, decimals)} ${symbol}`;
 
@@ -2371,15 +2431,19 @@
 					}
 				}
 
-				const gasLimit = await provider.estimateGas(txData);
+				const [gasLimit, l1Fee] = await Promise.all([
+					provider.estimateGas(txData),
+					getL1Fee(txData),
+				]);
 
 				txData.gasLimit = gasLimit !== 21000n ? gasLimit * 11000n / 10000n : gasLimit;
 
-				const txFees = gasPrice * txData.gasLimit;
+				const txFees = (gasPrice * txData.gasLimit) + l1Fee;
 
 				const tx = await signer.populateTransaction(txData);
 
 				tx.stringValue = stringValue;
+				tx.l1Fee = l1Fee;
 
 				console.log('TX:', tx);
 
@@ -2439,6 +2503,12 @@
 								<td>${ethers.formatUnits(txData.gasPrice, 'gwei')} gwei</td>
 							</tr>
 							`}
+							${l1Fee ? `
+							<tr>
+								<td>L1 Fees</td>
+								<td>${ethers.formatEther(l1Fee)} ${network.ticker}</td>
+							</tr>
+							` : ''}
 							<tr>
 								<td>Tx Fee</td>
 								<td>${ethers.formatUnits(txFees, network.decimals)} ${network.ticker}</td>
@@ -2713,6 +2783,7 @@
 				if (globalData.browserProvider) {
 					window.ethereum.removeListener('accountsChanged', closeWalletTimeout);
 					window.ethereum.removeListener('chainChanged', closeWalletTimeout);
+					window.ethereum.removeListener('disconnect', closeWalletTimeout);
 				}
 
 				globalData.clear()
