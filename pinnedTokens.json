@@ -1,1 +1,34 @@
-[]
+[
+    {
+        "chainId": 56,
+        "address": "0x55d398326f99059fF775485246999027B3197955",
+        "name": "Tether USD",
+        "symbol": "USDT",
+        "decimals": 18,
+        "logoURI": "https://assets.coingecko.com/coins/images/325/thumb/Tether.png?1696501661"
+    },
+    {
+        "chainId": 56,
+        "address": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+        "name": "BTCB Token",
+        "symbol": "BTCB",
+        "decimals": 18,
+        "logoURI": "https://assets.coingecko.com/coins/images/7598/thumb/wrapped_bitcoin_wbtc.png?1696507857"
+    },
+    {
+        "chainId": 137,
+        "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "name": "USD Coin (PoS)",
+        "symbol": "USDC",
+        "decimals": 6,
+        "logoURI": "https://assets.coingecko.com/coins/images/6319/thumb/usdc.png?1696506694"
+    },
+    {
+        "chainId": 42161,
+        "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+        "name": "USD Coin (Arb1)",
+        "symbol": "USDC",
+        "decimals": 6,
+        "logoURI": "https://assets.coingecko.com/coins/images/6319/thumb/usdc.png?1696506694"
+    }
+]
