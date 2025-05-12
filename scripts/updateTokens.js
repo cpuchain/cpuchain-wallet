@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/**
+ * Archived use coingecko-tokens
+ */
 const ethers = require('ethers');
 const fs = require('fs');
 

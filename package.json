@@ -10,9 +10,8 @@
     "build": "html-inline-external --src index.html --dest wallet.html"
   },
   "devDependencies": {
-    "@cpuchain/html-inline-external": "^1.0.10",
-    "eslint": "8.57.0",
-    "eslint-plugin-html": "^8.1.1",
-    "ethers": "^6.13.1"
+    "@cpuchain/eslint": "^1.0.5",
+    "@cpuchain/html-inline-external": "^1.0.13",
+    "typescript": "^5.8.3"
   }
 }
