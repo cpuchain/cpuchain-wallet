@@ -25,7 +25,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.0/bignumber.js" integrity="sha384-BSg6irOn0GCWvI6HSttJyRMZl4tEZoz5N6JG1REqgtYJSCtxcqDx6Y0MGlHZeGbo" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.1.0/lib/bitcoin.umd.min.js" integrity="sha384-Mz2ePSJXKLEKK3FitWWmIOGhFwWyMxhWbKHXKNSiN+gR1Tb0hBNQ03NU3Ece3037" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.1.0/lib/btcSigner.umd.js" integrity="sha384-hjaYFmpkDSbVspLqUQlLtAsf3awzyXSOIoEYxf+9QbIKZ+0v1JI9YxSP3Ev11P0d" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/ethers-ext@1.0.0/lib/ethExt.umd.js" integrity="sha384-nWZARsyANfl/FRZYnjJa0HaZMNKgwsa8LifKpH/Vq1zfykal8/CXOkRpvv1P3AOz" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/ethers-ext@1.0.2/lib/ethExt.umd.js" integrity="sha384-+EwmIORRC6YPPcawi7cwSF/0k1+HxfzLP7mafzv8hWTDK6edN67jqVyFhAkGtMyf" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/coingecko-tokens@1.0.2/lib/geckoTokens.umd.min.js" integrity="sha384-psan+mfdx2ehrOU4bTiiRYroApKvSxl+V6gcg0JJWyTtioSNRaat0VsdqUtXy/Py" crossorigin="anonymous"></script>
 		<script src="./multilang.js"></script>
 		<script src="./logos.js"></script>
@@ -655,7 +655,7 @@
 				};
 			}
 
-			const WALLET_VERSION = '1.11';
+			const WALLET_VERSION = '1.12';
 
 			const DEFAULT_NETWORK = 'CPU';
 
@@ -1069,22 +1069,19 @@
 						maxPriorityFeePerGas: '0.001',
 					},
 				},
-				HOLE: {
+				HOODI: {
 					uri: 'ethereum:',
-					title: 'Holesky Testnet Wallet',
-					name: 'Holesky Testnet (ETH)',
+					title: 'Hoodi Testnet Wallet',
+					name: 'Hoodi Testnet (ETH)',
 					logo: 'ethereum.png',
-					chainId: 17000,
+					chainId: 560048,
 					nodes: [
-						'https://ethereum-holesky.publicnode.com',
-						'https://rpc.holesky.ethpandaops.io',
-						'https://ethereum-holesky.blockpi.network/v1/rpc/public',
-						'https://holesky-rpc.nocturnode.tech',
-						'https://1rpc.io/holesky',
+						'https://ethereum-hoodi-rpc.publicnode.com',
+						'https://rpc.hoodi.ethpandaops.io',
 					],
 					ticker: 'ETH',
 					decimals: 18,
-					explorer: 'https://holesky.etherscan.io',
+					explorer: 'https://hoodi.etherscan.io',
 					fallbackGas: {
 						maxFeePerGas: '1',
 						maxPriorityFeePerGas: '0.001',
@@ -1383,7 +1380,13 @@
 				try {
 					const network = settings.network;
 
-					const node = $('#wallet-backend-selected').val();
+					let node = $('#wallet-backend-selected').val();
+
+					if (node === 'custom') {
+						node = $('#wallet-custom-backend').val();
+
+						$('#wallet-custom-backend').val('');
+					}
 
 					const language = $('#wallet-language-select').val();
 
@@ -1406,6 +1409,8 @@
 						settings.feePriority !== feePriority
 					) {
 						await loadSettings();
+
+						showMessage('Updated settings');
 					}
 
 				} catch (error) {
@@ -1456,6 +1461,7 @@
 					if (settings.node !== node) {
 						settings.node = node;
 
+						closeWallet();
 						$('#wallet-backend-selected').val(node);
 						showMessage(messages.settings.backendSwitched(node));
 					}
@@ -1752,7 +1758,7 @@
 				return provider;
 			}
 
-			function getProviderEth() {
+			async function getProviderEth() {
 				const config = getConfig();
 
 				if (config.node === 'offline') {
@@ -1773,6 +1779,13 @@
 					pollingInterval: 10000,
 				});
 
+				// Auto detect op stack chains for custom network
+				if (config.chainId === 31337) {
+					if ((await provider.getCode(ethExt.GAS_PRICE_ORACLE_ADDRESS)) !== '0x') {
+						provider.isOpStack = true;
+					}
+				}
+
 				globalData.provider = provider;
 
 				return provider;
@@ -1788,7 +1801,7 @@
 				if (config.isBtc) {
 					return getProviderBtc();
 				} else if (config.isEth) {
-					return getProviderEth();
+					return await getProviderEth();
 				}
 			}
 
@@ -2091,7 +2104,8 @@
 					customPriorityFee: () => {
 						return getFeePriority();
 					},
-					opGasPriceOracle: config.opGasPriceOracle,
+					opGasPriceOracle: config.opGasPriceOracle ||
+						(provider.isOpStack ? ethExt.GAS_PRICE_ORACLE_ADDRESS : undefined),
 				};
 
 				let signer;

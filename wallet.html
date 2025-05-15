@@ -16954,7 +16954,7 @@ class VoidWallet extends CoinWallet {
 /******/ })()
 ;
 });</script>
-		<script integrity="sha384-nWZARsyANfl/FRZYnjJa0HaZMNKgwsa8LifKpH/Vq1zfykal8/CXOkRpvv1P3AOz" crossorigin="anonymous">if (!globalThis.process?.browser) {
+		<script integrity="sha384-+EwmIORRC6YPPcawi7cwSF/0k1+HxfzLP7mafzv8hWTDK6edN67jqVyFhAkGtMyf" crossorigin="anonymous">if (!globalThis.process?.browser) {
     globalThis.process = { browser: true, env: {}, };
 }
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -17058,6 +17058,7 @@ __webpack_require__.d(__webpack_exports__, {
   DEFAULT_GAS_PRICE_BUMP: () => (/* reexport */ DEFAULT_GAS_PRICE_BUMP),
   ERC20__factory: () => (/* reexport */ ERC20__factory),
   EthersBatcher: () => (/* reexport */ EthersBatcher),
+  FeeDataExt: () => (/* reexport */ FeeDataExt),
   GAS_LIMIT_FAILOVER: () => (/* reexport */ GAS_LIMIT_FAILOVER),
   GAS_PRICE_ORACLE_ADDRESS: () => (/* reexport */ GAS_PRICE_ORACLE_ADDRESS),
   IDB_ERR: () => (/* reexport */ IDB_ERR),
@@ -17086,6 +17087,7 @@ __webpack_require__.d(__webpack_exports__, {
   digestHex: () => (/* reexport */ digestHex),
   ethers: () => (/* reexport */ ethers),
   factories: () => (/* reexport */ factories_namespaceObject),
+  formatFeeHistory: () => (/* reexport */ formatFeeHistory),
   getL1Fee: () => (/* reexport */ getL1Fee),
   getRateToEth: () => (/* reexport */ getRateToEth),
   getSubInfo: () => (/* reexport */ getSubInfo),
@@ -21119,7 +21121,7 @@ async function populateTransaction(signer, tx = {}) {
       if (!tx.type) {
         tx.type = 2;
       }
-      const maxPriorityFeePerGas = customPriorityFee || feeData.maxPriorityFeePerGas || 0n;
+      const maxPriorityFeePerGas = typeof tx.maxPriorityFeePerGas === "bigint" ? tx.maxPriorityFeePerGas : customPriorityFee ?? (feeData.maxPriorityFeePerGas || 0n);
       const maxFeePerGas = feeData.maxFeePerGas <= maxPriorityFeePerGas ? maxPriorityFeePerGas + 10n : feeData.maxFeePerGas;
       tx.maxFeePerGas = BigInt(Math.floor(Number(maxFeePerGas) * gasPriceBump));
       tx.maxPriorityFeePerGas = maxPriorityFeePerGas;
@@ -21353,6 +21355,61 @@ class BrowserProvider extends ethBrowserProvider {
       window?.dispatchEvent(new Event("eip6963:requestProvider"));
     });
   }
+}
+
+;// ./src/feeEstimator.ts
+
+function formatFeeHistory(result, historicalBlocks, includePending) {
+  let blockNum = Number(result.oldestBlock ?? 0);
+  let index = 0;
+  const blocks = [];
+  while (blockNum < Number(result.oldestBlock ?? 0) + historicalBlocks) {
+    blocks.push({
+      number: blockNum,
+      gasUsedRatio: Number(result.gasUsedRatio?.[index] ?? 0),
+      baseFeePerGas: BigInt(result.baseFeePerGas?.[index] ?? 0),
+      priorityFeePerGas: result.reward?.[index]?.map((x) => BigInt(x)) || []
+    });
+    blockNum++;
+    index++;
+  }
+  if (includePending) {
+    blocks.push({
+      number: "pending",
+      gasUsedRatio: NaN,
+      baseFeePerGas: BigInt(result.baseFeePerGas?.[historicalBlocks] ?? 0),
+      priorityFeePerGas: []
+    });
+  }
+  const { baseFeePerGasAvg, priorityFeePerGasAvg } = blocks.reduce(
+    (acc, curr, index2) => {
+      acc.baseFeePerGasAvg += curr.baseFeePerGas;
+      curr.priorityFeePerGas.forEach((gas, i) => {
+        if (!acc.priorityFeePerGasAvg[i]) {
+          acc.priorityFeePerGasAvg[i] = 0n;
+        }
+        if (gas) {
+          acc.priorityFeePerGasAvg[i] += gas;
+        }
+      });
+      if (blocks.length = index2 + 1) {
+        acc.baseFeePerGasAvg = acc.baseFeePerGasAvg / BigInt(blocks.length);
+        acc.priorityFeePerGasAvg = acc.priorityFeePerGasAvg.map((gas) => {
+          return gas ? gas / BigInt(blocks.length) : 0n;
+        });
+      }
+      return acc;
+    },
+    {
+      baseFeePerGasAvg: 0n,
+      priorityFeePerGasAvg: []
+    }
+  );
+  return {
+    blocks,
+    baseFeePerGasAvg,
+    priorityFeePerGasAvg
+  };
 }
 
 ;// ./src/idb.ts
@@ -21627,10 +21684,53 @@ async function getRateToEth(oracle, erc20) {
 
 
 
-const { AbiCoder, JsonRpcProvider: ethJsonRpcProvider, Network: ethNetwork, FeeData: ethFeeData } = ethers;
+
+const {
+  AbiCoder,
+  JsonRpcProvider: ethJsonRpcProvider,
+  Network: ethNetwork,
+  FeeData: ethFeeData,
+  defineProperties
+} = ethers;
+function toJson(value) {
+  if (value == null) {
+    return null;
+  }
+  return value.toString();
+}
+class FeeDataExt extends ethFeeData {
+  maxPriorityFeePerGasSlow;
+  maxPriorityFeePerGasMedium;
+  constructor(gasPrice, maxFeePerGas, maxPriorityFeePerGas, maxPriorityFeePerGasSlow, maxPriorityFeePerGasMedium) {
+    super(gasPrice, maxFeePerGas, maxPriorityFeePerGas);
+    defineProperties(this, {
+      gasPrice: typeof gasPrice === "bigint" ? gasPrice : null,
+      maxFeePerGas: typeof maxFeePerGas === "bigint" ? maxFeePerGas : null,
+      maxPriorityFeePerGas: typeof maxPriorityFeePerGas === "bigint" ? maxPriorityFeePerGas : null,
+      maxPriorityFeePerGasSlow: typeof maxPriorityFeePerGasSlow === "bigint" ? maxPriorityFeePerGasSlow : null,
+      maxPriorityFeePerGasMedium: typeof maxPriorityFeePerGasMedium === "bigint" ? maxPriorityFeePerGasMedium : null
+    });
+  }
+  /**
+   *  Returns a JSON-friendly value.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  toJSON() {
+    return {
+      _type: "FeeData",
+      gasPrice: toJson(this.gasPrice),
+      maxFeePerGas: toJson(this.maxFeePerGas),
+      maxPriorityFeePerGas: toJson(this.maxPriorityFeePerGas),
+      maxPriorityFeePerGasSlow: toJson(this.maxPriorityFeePerGasSlow),
+      maxPriorityFeePerGasMedium: toJson(this.maxPriorityFeePerGasMedium)
+    };
+  }
+}
 class Provider extends ethJsonRpcProvider {
   staticNetwork;
   #network;
+  // Fetch feeHistory
+  feeHistory;
   // Provider without multicall capabilities
   subProvider;
   multicall;
@@ -21642,6 +21742,7 @@ class Provider extends ethJsonRpcProvider {
   multicallTimer;
   constructor(url, network, options) {
     super(url, network, options);
+    this.feeHistory = options?.feeHistory ?? false;
     this.staticNetwork = (async () => {
       if (network) {
         return ethNetwork.from(network);
@@ -21684,11 +21785,12 @@ class Provider extends ethJsonRpcProvider {
    * using the value as is could throw an error from RPC as maxFeePerGas should be always bigger than maxPriorityFeePerGas
    */
   async getFeeData() {
-    const [maxFeePerGas, maxPriorityFeePerGas, gasPrice] = await Promise.all([
-      (async () => {
-        const block = await this.getBlock("latest");
-        return block?.baseFeePerGas || null;
-      })(),
+    const [
+      gasPrice,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      [maxPriorityFeePerGasMedium, maxPriorityFeePerGasSlow]
+    ] = await Promise.all([
       (async () => {
         try {
           return BigInt(await this.send("eth_gasPrice", []));
@@ -21697,14 +21799,39 @@ class Provider extends ethJsonRpcProvider {
         }
       })(),
       (async () => {
+        const block = await this.getBlock("latest");
+        return block?.baseFeePerGas ?? null;
+      })(),
+      (async () => {
         try {
-          return BigInt(await this.provider.send("eth_maxPriorityFeePerGas", []));
+          return BigInt(await this.send("eth_maxPriorityFeePerGas", []));
         } catch {
           return 0n;
         }
+      })(),
+      (async () => {
+        try {
+          if (!this.feeHistory) {
+            return [null, null];
+          }
+          const blocks = 10;
+          const { priorityFeePerGasAvg } = formatFeeHistory(
+            await this.send("eth_feeHistory", [blocks, "pending", [10, 25]]),
+            blocks
+          );
+          return [priorityFeePerGasAvg[0], priorityFeePerGasAvg[1]];
+        } catch {
+          return [null, null];
+        }
       })()
     ]);
-    return new ethFeeData(gasPrice, maxFeePerGas, maxPriorityFeePerGas);
+    return new FeeDataExt(
+      gasPrice,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      maxPriorityFeePerGasMedium,
+      maxPriorityFeePerGasSlow
+    );
   }
   /**
    * Multicaller
@@ -21764,6 +21891,7 @@ class Provider extends ethJsonRpcProvider {
 }
 
 ;// ./src/index.ts
+
 
 
 
@@ -23167,7 +23295,7 @@ const embedded = {
 				};
 			}
 
-			const WALLET_VERSION = '1.11';
+			const WALLET_VERSION = '1.12';
 
 			const DEFAULT_NETWORK = 'CPU';
 
@@ -23581,22 +23709,19 @@ const embedded = {
 						maxPriorityFeePerGas: '0.001',
 					},
 				},
-				HOLE: {
+				HOODI: {
 					uri: 'ethereum:',
-					title: 'Holesky Testnet Wallet',
-					name: 'Holesky Testnet (ETH)',
+					title: 'Hoodi Testnet Wallet',
+					name: 'Hoodi Testnet (ETH)',
 					logo: 'ethereum.png',
-					chainId: 17000,
+					chainId: 560048,
 					nodes: [
-						'https://ethereum-holesky.publicnode.com',
-						'https://rpc.holesky.ethpandaops.io',
-						'https://ethereum-holesky.blockpi.network/v1/rpc/public',
-						'https://holesky-rpc.nocturnode.tech',
-						'https://1rpc.io/holesky',
+						'https://ethereum-hoodi-rpc.publicnode.com',
+						'https://rpc.hoodi.ethpandaops.io',
 					],
 					ticker: 'ETH',
 					decimals: 18,
-					explorer: 'https://holesky.etherscan.io',
+					explorer: 'https://hoodi.etherscan.io',
 					fallbackGas: {
 						maxFeePerGas: '1',
 						maxPriorityFeePerGas: '0.001',
@@ -23895,7 +24020,13 @@ const embedded = {
 				try {
 					const network = settings.network;
 
-					const node = $('#wallet-backend-selected').val();
+					let node = $('#wallet-backend-selected').val();
+
+					if (node === 'custom') {
+						node = $('#wallet-custom-backend').val();
+
+						$('#wallet-custom-backend').val('');
+					}
 
 					const language = $('#wallet-language-select').val();
 
@@ -23918,6 +24049,8 @@ const embedded = {
 						settings.feePriority !== feePriority
 					) {
 						await loadSettings();
+
+						showMessage('Updated settings');
 					}
 
 				} catch (error) {
@@ -23968,6 +24101,7 @@ const embedded = {
 					if (settings.node !== node) {
 						settings.node = node;
 
+						closeWallet();
 						$('#wallet-backend-selected').val(node);
 						showMessage(messages.settings.backendSwitched(node));
 					}
@@ -24264,7 +24398,7 @@ const embedded = {
 				return provider;
 			}
 
-			function getProviderEth() {
+			async function getProviderEth() {
 				const config = getConfig();
 
 				if (config.node === 'offline') {
@@ -24285,6 +24419,13 @@ const embedded = {
 					pollingInterval: 10000,
 				});
 
+				// Auto detect op stack chains for custom network
+				if (config.chainId === 31337) {
+					if ((await provider.getCode(ethExt.GAS_PRICE_ORACLE_ADDRESS)) !== '0x') {
+						provider.isOpStack = true;
+					}
+				}
+
 				globalData.provider = provider;
 
 				return provider;
@@ -24300,7 +24441,7 @@ const embedded = {
 				if (config.isBtc) {
 					return getProviderBtc();
 				} else if (config.isEth) {
-					return getProviderEth();
+					return await getProviderEth();
 				}
 			}
 
@@ -24603,7 +24744,8 @@ const embedded = {
 					customPriorityFee: () => {
 						return getFeePriority();
 					},
-					opGasPriceOracle: config.opGasPriceOracle,
+					opGasPriceOracle: config.opGasPriceOracle ||
+						(provider.isOpStack ? ethExt.GAS_PRICE_ORACLE_ADDRESS : undefined),
 				};
 
 				let signer;
