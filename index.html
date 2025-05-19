@@ -19,14 +19,14 @@
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/datatables.net@2.3.0/js/dataTables.min.js" integrity="sha384-ehaRe3xJ0fffAlDr3p72vNw3wWV01C1/Z19X6s//i6hiF8hee+c+rabqObq8YlOk" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@2.3.0/js/dataTables.bootstrap4.min.js" integrity="sha384-lzE84zE76t/xTDUpoKl8o6c0h10nNP8YllhiEMM0c/sSn4F16OzlMehMoHkVTsTN" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/ethers@6.14.0/dist/ethers.umd.min.js" integrity="sha384-34QHxjpmrckLfsLBqjRCEfb9y2fUhFwOPXGgAcnStQq185tj8/hY8VB6UY94pSUm" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/ethers@6.14.1/dist/ethers.umd.min.js" integrity="sha384-LCTN2+xbDN7LFaPDNPRAfolq7k2r8NDMfUTaBW8DZgY/vnp79iUNo6C4uYzYXxiO" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/idb@8.0.3/build/umd.js" integrity="sha384-lLGuFiulNF2N/nqC6IxFZzy3WGfLokEKQD73HN9gCx1vFouvtty5kp+wf20Rrs0Y" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.0/bignumber.js" integrity="sha384-BSg6irOn0GCWvI6HSttJyRMZl4tEZoz5N6JG1REqgtYJSCtxcqDx6Y0MGlHZeGbo" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.1.0/lib/bitcoin.umd.min.js" integrity="sha384-Mz2ePSJXKLEKK3FitWWmIOGhFwWyMxhWbKHXKNSiN+gR1Tb0hBNQ03NU3Ece3037" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.1.0/lib/btcSigner.umd.js" integrity="sha384-hjaYFmpkDSbVspLqUQlLtAsf3awzyXSOIoEYxf+9QbIKZ+0v1JI9YxSP3Ev11P0d" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/ethers-ext@1.0.2/lib/ethExt.umd.js" integrity="sha384-+EwmIORRC6YPPcawi7cwSF/0k1+HxfzLP7mafzv8hWTDK6edN67jqVyFhAkGtMyf" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/coingecko-tokens@1.0.2/lib/geckoTokens.umd.min.js" integrity="sha384-psan+mfdx2ehrOU4bTiiRYroApKvSxl+V6gcg0JJWyTtioSNRaat0VsdqUtXy/Py" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/ethers-ext@1.0.7/lib/ethExt.umd.js" integrity="sha384-/IVwsfBbk4Y0kpSgjazrAGMiWrNOkh3+WAgwZV0+G25Xca9wib51hlgKJ3YCHZ4C" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/coingecko-tokens@1.0.3/lib/geckoTokens.umd.min.js" integrity="sha384-WXHoIJ8B+M/n4tfiqOdb+UiBvd4M94EfwSCQ6gCgPVOZ2e0thglS3qi14aXQPHZe" crossorigin="anonymous"></script>
 		<script src="./multilang.js"></script>
 		<script src="./logos.js"></script>
 
@@ -655,7 +655,7 @@
 				};
 			}
 
-			const WALLET_VERSION = '1.12';
+			const WALLET_VERSION = '1.13';
 
 			const DEFAULT_NETWORK = 'CPU';
 
@@ -781,17 +781,16 @@
 					chainId: 1,
 					nodes: [
 						'https://rpc.mevblocker.io',
-						'https://eth.llamarpc.com',
 						'https://1rpc.io/eth',
-						'https://eth.merkle.io',
-						'https://eth.drpc.org',
 						'https://eth.nodeconnect.org',
-						'https://ethereum-rpc.publicnode.com',
-						'https://api.zmok.io/mainnet/oaen6dy8ff6hju9k',
 						'https://eth.rpc.blxrbdn.com',
-						'https://api.securerpc.com/v1',
 						'https://eth-mainnet.nodereal.io/v1/1659dfb40aa24bbb8153a677b98064d7',
-						'https://public.stackup.sh/api/v1/node/ethereum-mainnet',
+						'https://go.getblock.io/aefd01aa907c4805ba3c00a9e5b48c6b',
+						'https://ethereum.blockpi.network/v1/rpc/public',
+						'https://rpc.eth.gateway.fm',
+						'https://ethereum.rpc.subquery.network/public',
+						'https://ethereum.keydonix.com/v1/mainnet',
+						'https://0xrpc.io/eth',
 					],
 					ticker: 'ETH',
 					decimals: 18,
@@ -809,7 +808,6 @@
 					chainId: 42161,
 					nodes: [
 						'https://arb1.arbitrum.io/rpc',
-						'https://arbitrum.llamarpc.com',
 						'https://1rpc.io/arb',
 						'https://arbitrum-one.public.blastapi.io',
 						'https://arbitrum-one.publicnode.com',
@@ -832,7 +830,6 @@
 						'https://mainnet.optimism.io',
 						'https://optimism-mainnet.public.blastapi.io',
 						'https://1rpc.io/op',
-						'https://optimism.llamarpc.com',
 						'https://optimism.publicnode.com',
 					],
 					ticker: 'ETH',
@@ -856,11 +853,30 @@
 						'https://base.meowrpc.com',
 						'https://base-mainnet.public.blastapi.io',
 						'https://base-rpc.publicnode.com',
-						'https://public.stackup.sh/api/v1/node/base-mainnet',
 					],
 					ticker: 'ETH',
 					decimals: 18,
 					explorer: 'https://basescan.org',
+					opGasPriceOracle: ethExt.GAS_PRICE_ORACLE_ADDRESS,
+					fallbackGas: {
+						maxFeePerGas: '0.02',
+						maxPriorityFeePerGas: '0.001',
+					},
+				},
+				UNI: {
+					uri: 'ethereum:',
+					title: 'Unichain Wallet',
+					name: 'Unichain (ETH)',
+					logo: 'ethereum.png',
+					chainId: 130,
+					nodes: [
+						'https://mainnet.unichain.org',
+						'https://0xrpc.io/uni',
+						'https://unichain-rpc.publicnode.com',
+					],
+					ticker: 'ETH',
+					decimals: 18,
+					explorer: 'https://uniscan.xyz',
 					opGasPriceOracle: ethExt.GAS_PRICE_ORACLE_ADDRESS,
 					fallbackGas: {
 						maxFeePerGas: '0.02',
@@ -881,18 +897,19 @@
 						'https://binance.nodereal.io',
 						'https://bsc-mainnet.nodereal.io/v1/64a9df0874fb4a93b9d0a3849de012d3',
 						'https://1rpc.io/bnb',
-						'https://binance.llamarpc.com',
 						'https://bsc-mainnet.public.blastapi.io',
-						'https://bnb.api.onfinality.io/public',
 						'https://bsc.rpc.blxrbdn.com',
 						'https://bsc-rpc.publicnode.com',
-						'https://public.stackup.sh/api/v1/node/bsc-mainnet',
+						'https://rpc-bsc.48.club',
+						'https://go.getblock.io/cc778cdbdf5c4b028ec9456e0e6c0cf3',
+						'https://bsc.rpc.blxrbdn.com',
+						'https://bsc.blockrazor.xyz',
 					],
 					ticker: 'BNB',
 					decimals: 18,
 					explorer: 'https://bscscan.com',
 					fallbackGas: {
-						gasPrice: '3',
+						gasPrice: '0.1',
 					},
 				},
 				POLY: {
@@ -905,10 +922,9 @@
 						'https://polygon-rpc.com',
 						'https://1rpc.io/matic',
 						'https://polygon.api.onfinality.io/public',
-						'https://polygon.llamarpc.com',
-						'https://endpoints.omniatech.io/v1/matic/mainnet/public',
 						'https://polygon-bor-rpc.publicnode.com',
-						'https://public.stackup.sh/api/v1/node/polygon-mainnet',
+						'https://rpc-mainnet.matic.quiknode.pro',
+						'https://polygon-mainnet.public.blastapi.io',
 					],
 					ticker: 'MATIC',
 					decimals: 18,
@@ -930,7 +946,6 @@
 						'https://1rpc.io/avax/c',
 						'https://avalanche.drpc.org',
 						'https://ava-mainnet.public.blastapi.io/ext/bc/C/rpc',
-						'https://public.stackup.sh/api/v1/node/avalanche-mainnet',
 					],
 					ticker: 'AVAX',
 					decimals: 18,
@@ -953,6 +968,7 @@
 						'https://gnosis.api.onfinality.io/public',
 						'https://gnosis-rpc.publicnode.com',
 						'https://gnosis.oat.farm',
+						'https://0xrpc.io/gno',
 					],
 					ticker: 'XDAI',
 					decimals: 18,
@@ -960,6 +976,26 @@
 					fallbackGas: {
 						maxFeePerGas: '3',
 						maxPriorityFeePerGas: '1.5',
+					},
+				},
+				ETC: {
+					uri: 'ethereum:',
+					title: 'Ethereum Classic Wallet',
+					name: 'Ethereum Classic (ETC)',
+					logo: 'etc.png',
+					chainId: 61,
+					nodes: [
+						'https://etc.rivet.link',
+						'https://etc.etcdesktop.com',
+						'https://rpc.etcinscribe.com',
+						'https://etc.mytokenpocket.vip',
+						'https://0xrpc.io/etc',
+					],
+					ticker: 'ETC',
+					decimals: 18,
+					explorer: 'https://etc.blockscout.com',
+					fallbackGas: {
+						gasPrice: '1.5',
 					},
 				},
 				TCPU: {
@@ -1040,6 +1076,8 @@
 						'https://rpc.sepolia.ethpandaops.io',
 						'https://rpc-sepolia.rockx.com',
 						'https://eth-sepolia.api.onfinality.io/public',
+						'https://ethereum-sepolia.rpc.subquery.network/public',
+						'https://0xrpc.io/sep',
 					],
 					ticker: 'ETH',
 					decimals: 18,
@@ -1078,6 +1116,7 @@
 					nodes: [
 						'https://ethereum-hoodi-rpc.publicnode.com',
 						'https://rpc.hoodi.ethpandaops.io',
+						'https://0xrpc.io/hoodi',
 					],
 					ticker: 'ETH',
 					decimals: 18,
@@ -1531,9 +1570,9 @@
 						await localDB.set('network', network);
 
 						await loadNetwork();
-
-						switchPage(page);
 					}
+
+					switchPage(page);
 
 				} catch (error) {
 					console.log(error);
@@ -1775,8 +1814,9 @@
 
 				const provider = new ethExt.Provider(config.node, undefined, {
 					chainId: config.chainId !== 31337 ? BigInt(config.chainId) : undefined,
-					multicallMaxCount: config.chainId === 31337 ? 0 : undefined,
 					pollingInterval: 10000,
+					// Ensure enough time for token balance call aggregation
+					batchStallTime: 120,
 				});
 
 				// Auto detect op stack chains for custom network
@@ -1828,10 +1868,11 @@
 				const provider = globalData.provider;
 				const signer = globalData.signer;
 
-				const [blockNumber, feeData, ethBalance, ...tokenBalances] = await Promise.all([
-					provider.getBlockNumber(),
+				const [{ chainId }, feeData, blockNumber, ethBalance, ...tokenBalances] = await Promise.all([
+					provider.getNetwork(),
 					provider.getFeeData(),
-					provider.getBalance(signer.address),
+					provider.multicall.getBlockNumber(),
+					provider.multicall.getEthBalance(signer.address),
 					...(chainTokens.map(async ({ logoURI, name, symbol, decimals, address }) => {
 						const balance = await ethExt.ERC20__factory.connect(address, provider).balanceOf(signer.address);
 
@@ -1866,10 +1907,12 @@
 				globalData.tokenTable.clear();
 				globalData.tokenTable.rows.add(tokenData);
 				globalData.tokenTable.draw();
-				
-				console.log(`Got ${tokenData.length} tokens for ${config.chainId} chain (Out of ${chainTokens.length})`);
 
-				console.log(`RPC: ${config.node}, Network: ${config.chainId}, Block ${blockNumber}, GasPrice: ${gasPriceText} gwei, PriorityFee: ${priorityFee} gwei`);
+				if (chainTokens.length) {
+					console.log(`Got ${tokenData.length} tokens for ${Number(chainId)} chain (Out of ${chainTokens.length})`);
+				}
+
+				console.log(`RPC: ${config.node}, Network: ${Number(chainId)}, Block ${blockNumber}, GasPrice: ${gasPriceText} gwei, PriorityFee: ${priorityFee} gwei`);
 			}
 
 			// Refresh UTXO list and wallet balance
