@@ -16954,7 +16954,7 @@ class VoidWallet extends CoinWallet {
 /******/ })()
 ;
 });</script>
-		<script integrity="sha384-/IVwsfBbk4Y0kpSgjazrAGMiWrNOkh3+WAgwZV0+G25Xca9wib51hlgKJ3YCHZ4C" crossorigin="anonymous">if (!globalThis.process?.browser) {
+		<script integrity="sha384-uDdVEa9yfNZeirYZI6/Z8l54e20p96CEEmocDOkPshYe6mBqHCqzXk9jMsGWC1Hl" crossorigin="anonymous">if (!globalThis.process?.browser) {
     globalThis.process = { browser: true, env: {}, };
 }
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -17061,7 +17061,6 @@ __webpack_require__.d(__webpack_exports__, {
   FeeDataExt: () => (/* reexport */ FeeDataExt),
   GAS_LIMIT_FAILOVER: () => (/* reexport */ GAS_LIMIT_FAILOVER),
   GAS_PRICE_ORACLE_ADDRESS: () => (/* reexport */ GAS_PRICE_ORACLE_ADDRESS),
-  IDB_ERR: () => (/* reexport */ IDB_ERR),
   IndexedDB: () => (/* reexport */ IndexedDB),
   JsonRpcSigner: () => (/* reexport */ JsonRpcSigner),
   MULTICALL_ADDRESS: () => (/* reexport */ MULTICALL_ADDRESS),
@@ -21017,8 +21016,6 @@ class EthersBatcher {
   // eth_getLogs block range
   eventRange;
   delays;
-  retry;
-  // Boolean to enable retries
   retryMax;
   // Max retry count
   retryOn;
@@ -21031,7 +21028,6 @@ class EthersBatcher {
     eventBatch,
     eventRange,
     delays,
-    retry,
     retryMax,
     retryOn,
     onProgress
@@ -21042,8 +21038,7 @@ class EthersBatcher {
     this.eventBatch = eventBatch || 3;
     this.eventRange = eventRange || 5e3;
     this.delays = delays;
-    this.retry = retry ?? true;
-    this.retryMax = retryMax || 3;
+    this.retryMax = retryMax || 2;
     this.retryOn = retryOn || 500;
     this.onProgress = onProgress;
   }
@@ -21057,7 +21052,7 @@ class EthersBatcher {
           return (async () => {
             let retries = 0;
             let err;
-            while (!this.retry && retries === 0 || this.retry && retries < this.retryMax) {
+            while (retries <= this.retryMax) {
               try {
                 return await Promise.all(_inputs.map((input) => outputFunc(input)));
               } catch (e) {
@@ -21319,17 +21314,17 @@ async function populateTransaction(signer, tx = {}) {
   }
   const [chainId, feeData, nonce, balance, l1Fee] = await Promise.all([
     tx.chainId ? void 0 : provider.getNetwork().then(({ chainId: chainId2 }) => chainId2),
-    tx.maxFeePerGas || tx.gasPrice || tx.maxFeePerGas === 0n || tx.gasPrice === 0n ? void 0 : provider.getFeeData(),
-    tx.nonce || tx.nonce === 0 ? void 0 : provider.getTransactionCount(signerAddress, "pending"),
-    tx.txCost || !signer.autoValue ? void 0 : provider.getBalance(signerAddress),
+    typeof tx.maxFeePerGas === "bigint" || typeof tx.gasPrice === "bigint" ? void 0 : provider.getFeeData(),
+    typeof tx.nonce === "number" ? void 0 : provider.getTransactionCount(signerAddress, "pending"),
+    typeof tx.txCost === "bigint" || !signer.autoValue ? void 0 : (provider.multicall?.getEthBalance || provider.getBalance)(signerAddress),
     tx.l1Fee || !signer.opGasPriceOracle ? 0n : getL1Fee(signer.opGasPriceOracle, tx)
   ]);
-  if (chainId) {
+  if (typeof chainId === "bigint") {
     tx.chainId = chainId;
   }
   let gasPrice = 0n;
   if (feeData) {
-    if (feeData.maxFeePerGas || feeData.maxFeePerGas === 0n) {
+    if (feeData.maxFeePerGas) {
       if (!tx.type) {
         tx.type = 2;
       }
@@ -21339,7 +21334,7 @@ async function populateTransaction(signer, tx = {}) {
       tx.maxPriorityFeePerGas = maxPriorityFeePerGas;
       delete tx.gasPrice;
       gasPrice = tx.maxFeePerGas + tx.maxPriorityFeePerGas;
-    } else if (feeData.gasPrice || feeData.gasPrice === 0n) {
+    } else if (typeof feeData.gasPrice === "bigint") {
       if (!tx.type && tx.type !== 0) {
         tx.type = 0;
       }
@@ -21351,7 +21346,7 @@ async function populateTransaction(signer, tx = {}) {
   } else {
     gasPrice = tx.maxFeePerGas ? BigInt(tx.maxFeePerGas) + BigInt(tx.maxPriorityFeePerGas || 0n) : BigInt(tx.gasPrice || 0n);
   }
-  if (nonce || nonce === 0) {
+  if (typeof nonce === "number") {
     tx.nonce = nonce;
   }
   if (balance && BigInt(tx.value || 0) >= balance) {
@@ -22952,6 +22947,11 @@ const embedded = {
 			.card-header-tabs .nav-item {
 				margin-right: 0.5rem;
 			}
+			@media (min-width: 991.98px) {
+				.table-responsive {
+					display: inline-table !important;
+				}
+			}
 			@media (max-width: 991.98px) {
 				.navbar-expand-lg>.container, .navbar-expand-lg>.container-fluid {
 					padding-right: 15px;
@@ -23462,7 +23462,7 @@ const embedded = {
 					</div>
 					<div class="modal-body">
 						<div id="confirm-screen" class="d-none">
-							<div id="confirm-table" class="mobile-hide"></div>
+							<div id="confirm-table"></div>
 							<div id="confirm-context"></div>
 						</div>
 						<div id="status-screen" class="d-none">
@@ -23509,7 +23509,7 @@ const embedded = {
 				};
 			}
 
-			const WALLET_VERSION = '1.13';
+			const WALLET_VERSION = '1.14';
 
 			const DEFAULT_NETWORK = 'CPU';
 
@@ -25351,7 +25351,7 @@ const embedded = {
 						+ `<strong>${btcSigner.formatCoins(outputsCoins)} ${config.ticker} (Fees: ${tx.fees} ${config.ticker})</strong>. `
 						+ `<span>${getText('send-warning-reverse')}</span>`,
 						`
-						<table class="table table-bordered">
+						<table class="table table-bordered table-responsive">
 							${getTbody(
 								['Network', config.name],
 								['Input Amounts', `${tx.inputAmounts} ${config.ticker}`],
@@ -25472,7 +25472,7 @@ const embedded = {
 						+ `<strong>${tx.valueString} (Fees: ${ethers.formatUnits(tx.txCost, config.decimals)} ${config.ticker})</strong>. `
 						+ `<span>${getText('send-warning-reverse')}</span>`,
 						`
-						<table class="table table-bordered">
+						<table class="table table-bordered table-responsive">
 							${getTbody(
 								['Network', config.name],
 								['ChainId', tx.chainId],
@@ -25590,7 +25590,7 @@ const embedded = {
 						+ `<strong>${tx.valueString} (Fees: ${ethers.formatUnits(tx.txCost, config.decimals)} ${config.ticker})</strong>. `
 						+ `<span>${getText('send-warning-reverse')}</span>`,
 						`
-						<table class="table table-bordered">
+						<table class="table table-bordered table-responsive">
 							${getTbody(
 								['Network', config.name],
 								['ChainId', tx.chainId],
@@ -25951,12 +25951,13 @@ const embedded = {
 				routePage();
 
 				globalData.tokenTable = $('#tokens-table').DataTable({
-					autoWidth: false,
+					scrollX: true,
+					autoWidth: true,
 					columns: [
 						{ data: 'token' },
 						{ data: 'tokenAddress' },
 						{ data: 'balance' },
-					]
+					],
 				});
 
 				$('.tab-link').click(function(e) {

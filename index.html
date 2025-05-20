@@ -25,7 +25,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.0/bignumber.js" integrity="sha384-BSg6irOn0GCWvI6HSttJyRMZl4tEZoz5N6JG1REqgtYJSCtxcqDx6Y0MGlHZeGbo" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.1.0/lib/bitcoin.umd.min.js" integrity="sha384-Mz2ePSJXKLEKK3FitWWmIOGhFwWyMxhWbKHXKNSiN+gR1Tb0hBNQ03NU3Ece3037" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/btc-signer@1.1.0/lib/btcSigner.umd.js" integrity="sha384-hjaYFmpkDSbVspLqUQlLtAsf3awzyXSOIoEYxf+9QbIKZ+0v1JI9YxSP3Ev11P0d" crossorigin="anonymous"></script>
-		<script src="https://cdn.jsdelivr.net/npm/ethers-ext@1.0.7/lib/ethExt.umd.js" integrity="sha384-/IVwsfBbk4Y0kpSgjazrAGMiWrNOkh3+WAgwZV0+G25Xca9wib51hlgKJ3YCHZ4C" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/ethers-ext@1.0.9/lib/ethExt.umd.js" integrity="sha384-uDdVEa9yfNZeirYZI6/Z8l54e20p96CEEmocDOkPshYe6mBqHCqzXk9jMsGWC1Hl" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/coingecko-tokens@1.0.3/lib/geckoTokens.umd.min.js" integrity="sha384-WXHoIJ8B+M/n4tfiqOdb+UiBvd4M94EfwSCQ6gCgPVOZ2e0thglS3qi14aXQPHZe" crossorigin="anonymous"></script>
 		<script src="./multilang.js"></script>
 		<script src="./logos.js"></script>
@@ -97,6 +97,11 @@
 			}
 			.card-header-tabs .nav-item {
 				margin-right: 0.5rem;
+			}
+			@media (min-width: 991.98px) {
+				.table-responsive {
+					display: inline-table !important;
+				}
 			}
 			@media (max-width: 991.98px) {
 				.navbar-expand-lg>.container, .navbar-expand-lg>.container-fluid {
@@ -608,7 +613,7 @@
 					</div>
 					<div class="modal-body">
 						<div id="confirm-screen" class="d-none">
-							<div id="confirm-table" class="mobile-hide"></div>
+							<div id="confirm-table"></div>
 							<div id="confirm-context"></div>
 						</div>
 						<div id="status-screen" class="d-none">
@@ -655,7 +660,7 @@
 				};
 			}
 
-			const WALLET_VERSION = '1.13';
+			const WALLET_VERSION = '1.14';
 
 			const DEFAULT_NETWORK = 'CPU';
 
@@ -2497,7 +2502,7 @@
 						+ `<strong>${btcSigner.formatCoins(outputsCoins)} ${config.ticker} (Fees: ${tx.fees} ${config.ticker})</strong>. `
 						+ `<span>${getText('send-warning-reverse')}</span>`,
 						`
-						<table class="table table-bordered">
+						<table class="table table-bordered table-responsive">
 							${getTbody(
 								['Network', config.name],
 								['Input Amounts', `${tx.inputAmounts} ${config.ticker}`],
@@ -2618,7 +2623,7 @@
 						+ `<strong>${tx.valueString} (Fees: ${ethers.formatUnits(tx.txCost, config.decimals)} ${config.ticker})</strong>. `
 						+ `<span>${getText('send-warning-reverse')}</span>`,
 						`
-						<table class="table table-bordered">
+						<table class="table table-bordered table-responsive">
 							${getTbody(
 								['Network', config.name],
 								['ChainId', tx.chainId],
@@ -2736,7 +2741,7 @@
 						+ `<strong>${tx.valueString} (Fees: ${ethers.formatUnits(tx.txCost, config.decimals)} ${config.ticker})</strong>. `
 						+ `<span>${getText('send-warning-reverse')}</span>`,
 						`
-						<table class="table table-bordered">
+						<table class="table table-bordered table-responsive">
 							${getTbody(
 								['Network', config.name],
 								['ChainId', tx.chainId],
@@ -3097,12 +3102,13 @@
 				routePage();
 
 				globalData.tokenTable = $('#tokens-table').DataTable({
-					autoWidth: false,
+					scrollX: true,
+					autoWidth: true,
 					columns: [
 						{ data: 'token' },
 						{ data: 'tokenAddress' },
 						{ data: 'balance' },
-					]
+					],
 				});
 
 				$('.tab-link').click(function(e) {
