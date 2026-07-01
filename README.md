@@ -1,8 +1,10 @@
 # CPUchain Web Wallet
 
-### Notice
+## Notice
 
 Web Wallet is now on maintenace mode since we are upgrading the wallet itself with updated dependencies
+
+## About
 
 Nice and simple web wallet with robust [Blockbook](https://github.com/cpuchain/blockbook) backend :3
 
